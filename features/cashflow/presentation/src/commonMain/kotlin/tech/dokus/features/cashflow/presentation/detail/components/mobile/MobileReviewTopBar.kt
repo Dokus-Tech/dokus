@@ -11,11 +11,14 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.action_back
+import tech.dokus.aura.resources.action_download_pdf
 import tech.dokus.aura.resources.nav_documents
 import tech.dokus.features.cashflow.presentation.common.components.chips.DokusStatusChip
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
 import tech.dokus.features.cashflow.presentation.detail.SourceEvidenceViewerState
 import tech.dokus.features.cashflow.presentation.detail.statusBadgeLocalized
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.common.PTopAppBar
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.colorized
@@ -26,6 +29,7 @@ import tech.dokus.features.cashflow.presentation.detail.colorized as financialSt
 internal fun MobileDocumentDetailTopBar(
     state: DocumentDetailState,
     onBackClick: () -> Unit,
+    onDownloadPdf: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     PTopAppBar(
@@ -33,6 +37,13 @@ internal fun MobileDocumentDetailTopBar(
         navController = null,
         onBackClick = onBackClick,
         actions = {
+            if (state.hasContent) {
+                PButton(
+                    text = stringResource(Res.string.action_download_pdf),
+                    variant = PButtonVariant.OutlineMuted,
+                    onClick = onDownloadPdf,
+                )
+            }
             DokusStatusChip(
                 label = state.statusBadgeLocalized,
                 color = state.financialStatus.financialStatusColorized,

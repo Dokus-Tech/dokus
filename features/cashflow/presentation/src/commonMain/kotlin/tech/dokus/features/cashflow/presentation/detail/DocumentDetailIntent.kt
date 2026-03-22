@@ -81,4 +81,7 @@ sealed interface DocumentDetailIntent : MVIIntent {
 
     // Dismiss action error banner
     data object DismissActionError : DocumentDetailIntent
+
+    // Download original PDF
+    data object DownloadPdf : DocumentDetailIntent
 }

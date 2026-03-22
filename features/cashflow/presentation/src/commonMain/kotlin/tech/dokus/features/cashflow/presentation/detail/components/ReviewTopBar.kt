@@ -24,6 +24,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_download_pdf
 import tech.dokus.aura.resources.cashflow_document_review_title
 import tech.dokus.aura.resources.cashflow_needs_attention
 import tech.dokus.aura.resources.cashflow_needs_input
@@ -32,6 +33,8 @@ import tech.dokus.aura.resources.cashflow_review_status_ready
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
 import tech.dokus.features.cashflow.presentation.detail.models.DocumentUiData
 import tech.dokus.foundation.aura.components.PBackButton
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.style.textMuted
@@ -46,6 +49,7 @@ private val StatusDotSize = 6.dp
 internal fun ReviewTopBar(
     state: DocumentDetailState,
     onBackClick: () -> Unit,
+    onDownloadPdf: () -> Unit,
     backLabel: String = "",
 ) {
     Column {
@@ -83,7 +87,15 @@ internal fun ReviewTopBar(
             navigationIcon = {
                 PBackButton(label = backLabel.ifEmpty { null }, onBackPress = onBackClick)
             },
-            actions = {},
+            actions = {
+                if (state.hasContent) {
+                    PButton(
+                        text = stringResource(Res.string.action_download_pdf),
+                        variant = PButtonVariant.OutlineMuted,
+                        onClick = onDownloadPdf,
+                    )
+                }
+            },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = MaterialTheme.colorScheme.surface,
                 navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
@@ -185,6 +197,7 @@ private fun ReviewTopBarPreview(
         ReviewTopBar(
             state = DocumentDetailState(),
             onBackClick = {},
+            onDownloadPdf = {},
         )
     }
 }

@@ -47,6 +47,7 @@ internal fun DocumentDetailScreen(
                 ReviewTopBar(
                     state = state,
                     onBackClick = onBackClick,
+                    onDownloadPdf = { onIntent(DocumentDetailIntent.DownloadPdf) },
                     backLabel = backLabel,
                 )
             }

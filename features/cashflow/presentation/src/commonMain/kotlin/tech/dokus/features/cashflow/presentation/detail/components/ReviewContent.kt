@@ -455,6 +455,7 @@ private fun MobileReviewContent(
         MobileFallbackContent(
             state = state,
             contentPadding = adjustedContentPadding,
+            onIntent = onIntent,
             onBackClick = onBackClick,
         )
         return
@@ -479,6 +480,7 @@ private fun MobileReviewContent(
 private fun MobileFallbackContent(
     state: DocumentDetailState,
     contentPadding: PaddingValues,
+    onIntent: (DocumentDetailIntent) -> Unit,
     onBackClick: () -> Unit,
 ) {
     Column(
@@ -489,6 +491,7 @@ private fun MobileFallbackContent(
         MobileDocumentDetailTopBar(
             state = state,
             onBackClick = onBackClick,
+            onDownloadPdf = { onIntent(DocumentDetailIntent.DownloadPdf) },
         )
 
         Column(

@@ -11,4 +11,5 @@ sealed interface DocumentDetailAction : MVIAction {
     data object NavigateBack : DocumentDetailAction
     data class NavigateToEntity(val entityId: String, val entityType: DocumentType) : DocumentDetailAction
     data class NavigateToCashflowEntry(val entryId: CashflowEntryId) : DocumentDetailAction
+    data class DownloadDocument(val documentId: DocumentId) : DocumentDetailAction
 }

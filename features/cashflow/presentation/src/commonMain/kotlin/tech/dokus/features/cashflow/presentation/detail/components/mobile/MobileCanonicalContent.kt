@@ -52,6 +52,7 @@ internal fun MobileCanonicalContent(
         MobileDocumentDetailTopBar(
             state = state,
             onBackClick = onBackClick,
+            onDownloadPdf = { onIntent(DocumentDetailIntent.DownloadPdf) },
         )
 
         Column(

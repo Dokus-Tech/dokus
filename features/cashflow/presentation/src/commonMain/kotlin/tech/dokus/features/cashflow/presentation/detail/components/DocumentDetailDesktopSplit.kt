@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.datetime.LocalDate
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
+import tech.dokus.aura.resources.action_download_pdf
 import tech.dokus.aura.resources.document_detail_locked
 import tech.dokus.aura.resources.document_detail_vendor_fallback
 import tech.dokus.domain.DisplayName
@@ -50,6 +51,8 @@ import tech.dokus.foundation.app.shell.colorized
 import tech.dokus.foundation.app.shell.dateLocalized
 import tech.dokus.foundation.app.shell.dotType
 import tech.dokus.foundation.app.shell.statusLocalized
+import tech.dokus.foundation.aura.components.PButton
+import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.background.AmbientBackground
 import tech.dokus.foundation.aura.components.common.KeyboardNavigationHint
 import tech.dokus.foundation.aura.extensions.arrowKeyNavigation
@@ -82,6 +85,7 @@ internal fun DocumentDetailDesktopSplit(
     onSelectDocument: (DocumentId) -> Unit,
     onLoadMore: () -> Unit,
     onExit: () -> Unit,
+    onDownloadPdf: () -> Unit,
     backLabel: String = "",
     content: @Composable () -> Unit,
     modifier: Modifier = Modifier,
@@ -138,6 +142,7 @@ internal fun DocumentDetailDesktopSplit(
                     DetailTitleBar(
                         vendorName = selectedDoc?.vendorName?.value
                             ?: stringResource(Res.string.document_detail_vendor_fallback),
+                        onDownloadPdf = onDownloadPdf,
                     )
 
                     CompositionLocalProvider(LocalIsInDocDetailMode provides true) {
@@ -158,6 +163,7 @@ internal fun DocumentDetailDesktopSplit(
 @Composable
 private fun DetailTitleBar(
     vendorName: String,
+    onDownloadPdf: () -> Unit,
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val spacing = MaterialTheme.dokusSpacing
@@ -191,6 +197,11 @@ private fun DetailTitleBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(spacing.small),
             ) {
+                PButton(
+                    text = stringResource(Res.string.action_download_pdf),
+                    variant = PButtonVariant.OutlineMuted,
+                    onClick = onDownloadPdf,
+                )
                 LockIcon(modifier = Modifier.size(12.dp))
                 Text(
                     text = stringResource(Res.string.document_detail_locked),
@@ -330,6 +341,7 @@ private fun DocumentDetailDesktopSplitPreview(
             onSelectDocument = {},
             onLoadMore = {},
             onExit = {},
+            onDownloadPdf = {},
             content = {
                 Box(
                     modifier = Modifier.fillMaxSize(),

@@ -168,6 +168,13 @@ internal class DocumentDetailContainer(
                         updateState { copy(actionError = null) }
                     }
 
+                    DocumentDetailIntent.DownloadPdf -> {
+                        withState {
+                            val docId = documentId ?: return@withState
+                            action(DocumentDetailAction.DownloadDocument(docId))
+                        }
+                    }
+
                     else -> {
                         dispatchToReducer(intent)
                     }
@@ -264,7 +271,8 @@ internal class DocumentDetailContainer(
                     DocumentDetailIntent.LoadMoreQueue,
                     DocumentDetailIntent.RefreshQueue,
                     DocumentDetailIntent.HandleRemoteDeletion,
-                    DocumentDetailIntent.DismissActionError -> Unit
+                    DocumentDetailIntent.DismissActionError,
+                    DocumentDetailIntent.DownloadPdf -> Unit
                 }
             }
         }
