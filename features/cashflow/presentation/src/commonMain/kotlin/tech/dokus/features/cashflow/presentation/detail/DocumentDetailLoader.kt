@@ -233,6 +233,7 @@ internal class DocumentDetailLoader(
                 ),
                 isAwaitingExtraction = false,
                 isContactRequired = content.isContactRequired,
+                detectedContactAccepted = false,
                 documentStatus = draft.documentStatus,
                 confirmedCashflowEntryId = document.cashflowEntryId,
                 cashflowEntryState = previousCashflowEntryState,

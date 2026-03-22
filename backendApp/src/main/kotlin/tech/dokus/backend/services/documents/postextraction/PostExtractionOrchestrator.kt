@@ -6,6 +6,7 @@ import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.model.BankStatementDraftData
 import tech.dokus.domain.model.contact.CounterpartyInfo
+import tech.dokus.domain.model.toDirection
 import tech.dokus.domain.utils.json
 import tech.dokus.features.ai.models.toAuthoritativeCounterpartySnapshot
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -69,7 +70,9 @@ internal class PostExtractionOrchestrator(
         )
 
         var linkedContactId: tech.dokus.domain.ids.ContactId? = null
-        val authoritativeSnapshot = context.extraction.toAuthoritativeCounterpartySnapshot()
+        val authoritativeSnapshot = context.extraction.toAuthoritativeCounterpartySnapshot(
+            resolvedDirection = draftData.toDirection(),
+        )
         if (authoritativeSnapshot == null) {
             logger.warn(
                 "Missing authoritative counterparty snapshot for document {}; forcing PendingReview",

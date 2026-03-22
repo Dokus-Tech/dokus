@@ -147,6 +147,7 @@ data class DocumentDetailState(
     val isContactRequired: Boolean = false,
     val contactValidationError: DokusException? = null,
     val isBindingContact: Boolean = false,
+    val detectedContactAccepted: Boolean = false,
     val isRejecting: Boolean = false,
     val isResolvingMatchReview: Boolean = false,
     val documentStatus: DocumentStatus? = null,
@@ -303,6 +304,8 @@ data class DocumentDetailState(
     val contactMatchStatus: ContactMatchStatus
         get() = when {
             effectiveContact is ResolvedContact.Linked -> ContactMatchStatus.Matched
+            effectiveContact is ResolvedContact.Detected && detectedContactAccepted ->
+                ContactMatchStatus.Matched
             effectiveContact is ResolvedContact.Suggested && draftData.isContactRequired ->
                 ContactMatchStatus.Uncertain
             effectiveContact is ResolvedContact.Detected && draftData.isContactRequired ->

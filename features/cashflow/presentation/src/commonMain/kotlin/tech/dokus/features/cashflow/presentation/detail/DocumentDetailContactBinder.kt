@@ -59,9 +59,16 @@ internal class DocumentDetailContactBinder(
     suspend fun DocumentDetailCtx.handleAcceptSuggestedContact() {
         withState {
             val activeDocumentId = documentId ?: return@withState
-            val suggested = effectiveContact as? ResolvedContact.Suggested
-                ?: return@withState
-            bindContact(activeDocumentId, suggested.contactId)
+            when (val contact = effectiveContact) {
+                is ResolvedContact.Suggested -> bindContact(activeDocumentId, contact.contactId)
+                is ResolvedContact.Detected -> {
+                    // User accepts the detected counterparty data — backend will auto-create
+                    // the contact on confirmation. Mark as accepted so the contact issue resolves.
+                    updateState { copy(detectedContactAccepted = true) }
+                }
+                is ResolvedContact.Linked,
+                is ResolvedContact.Unknown -> Unit
+            }
         }
     }
 

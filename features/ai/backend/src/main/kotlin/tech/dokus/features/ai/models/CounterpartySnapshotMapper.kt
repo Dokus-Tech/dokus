@@ -2,13 +2,30 @@ package tech.dokus.features.ai.models
 
 import tech.dokus.domain.Email
 import tech.dokus.domain.enums.Country
+import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 import tech.dokus.domain.model.contact.PostalAddressDto
+import tech.dokus.features.ai.graph.sub.extraction.financial.CreditNoteExtractionResult
+import tech.dokus.features.ai.graph.sub.extraction.financial.InvoiceExtractionResult
 
-fun FinancialExtractionResult.toAuthoritativeCounterpartySnapshot(): CounterpartySnapshotDto? = when (this) {
-    is FinancialExtractionResult.Invoice -> data.counterparty.toSnapshot()
-    is FinancialExtractionResult.CreditNote -> data.counterparty.toSnapshot()
+/**
+ * Build the authoritative counterparty snapshot from extraction data.
+ *
+ * For invoices and credit notes, when [resolvedDirection] is known (INBOUND/OUTBOUND),
+ * we use the seller/buyer fields directly — the AI's `counterparty` block is an LLM
+ * opinion that can be wrong (e.g., picking the tenant as counterparty).
+ *
+ * Falls back to the AI counterparty field when direction is unknown or seller/buyer
+ * data is insufficient.
+ */
+fun FinancialExtractionResult.toAuthoritativeCounterpartySnapshot(
+    resolvedDirection: DocumentDirection = DocumentDirection.Unknown,
+): CounterpartySnapshotDto? = when (this) {
+    is FinancialExtractionResult.Invoice ->
+        data.directionAwareSnapshot(resolvedDirection) ?: data.counterparty.toSnapshot()
+    is FinancialExtractionResult.CreditNote ->
+        data.directionAwareSnapshot(resolvedDirection) ?: data.counterparty.toSnapshot()
     is FinancialExtractionResult.Receipt -> data.counterparty.toSnapshot()
     is FinancialExtractionResult.BankStatement -> data.institutionName
         ?.trim()
@@ -18,6 +35,70 @@ fun FinancialExtractionResult.toAuthoritativeCounterpartySnapshot(): Counterpart
     is FinancialExtractionResult.ProForma,
     is FinancialExtractionResult.PurchaseOrder,
     is FinancialExtractionResult.Unsupported -> null
+}
+
+/**
+ * For invoices: use seller fields when INBOUND, buyer fields when OUTBOUND.
+ * Returns null when direction is unknown or the chosen party has no usable data.
+ */
+private fun InvoiceExtractionResult.directionAwareSnapshot(
+    direction: DocumentDirection,
+): CounterpartySnapshotDto? {
+    return when (direction) {
+        DocumentDirection.Inbound -> sellerSnapshot()
+        DocumentDirection.Outbound -> buyerSnapshot()
+        DocumentDirection.Unknown,
+        DocumentDirection.Neutral -> null
+    }
+}
+
+/**
+ * For credit notes: use seller fields when INBOUND, buyer fields when OUTBOUND.
+ * Returns null when direction is unknown or the chosen party has no usable data.
+ */
+private fun CreditNoteExtractionResult.directionAwareSnapshot(
+    direction: DocumentDirection,
+): CounterpartySnapshotDto? {
+    val name: String?
+    val vat: VatNumber?
+    when (direction) {
+        DocumentDirection.Inbound -> { name = sellerName; vat = sellerVat }
+        DocumentDirection.Outbound -> { name = buyerName; vat = buyerVat }
+        DocumentDirection.Unknown,
+        DocumentDirection.Neutral -> return null
+    }
+    val snapshot = CounterpartySnapshotDto(name = name.cleanText(), vatNumber = vat)
+    return snapshot.takeIf { it.name != null || it.vatNumber != null }
+}
+
+private fun InvoiceExtractionResult.sellerSnapshot(): CounterpartySnapshotDto? {
+    val snapshot = CounterpartySnapshotDto(
+        name = sellerName.cleanText(),
+        vatNumber = sellerVat,
+        email = sellerEmail,
+        address = PostalAddressDto(
+            streetLine1 = sellerStreet.cleanText(),
+            postalCode = sellerPostalCode.cleanText(),
+            city = sellerCity.cleanText(),
+            country = sellerCountry.toCountryOrNull(),
+        ),
+    )
+    return snapshot.takeIf { it.name != null || it.vatNumber != null }
+}
+
+private fun InvoiceExtractionResult.buyerSnapshot(): CounterpartySnapshotDto? {
+    val snapshot = CounterpartySnapshotDto(
+        name = buyerName.cleanText(),
+        vatNumber = buyerVat,
+        email = buyerEmail,
+        address = PostalAddressDto(
+            streetLine1 = buyerStreet.cleanText(),
+            postalCode = buyerPostalCode.cleanText(),
+            city = buyerCity.cleanText(),
+            country = buyerCountry.toCountryOrNull(),
+        ),
+    )
+    return snapshot.takeIf { it.name != null || it.vatNumber != null }
 }
 
 private fun CounterpartyExtraction?.toSnapshot(): CounterpartySnapshotDto? {
