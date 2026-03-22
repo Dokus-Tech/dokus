@@ -45,7 +45,6 @@ import tech.dokus.aura.resources.review_duplicate_incoming
 import tech.dokus.aura.resources.review_duplicate_label_invoice
 import tech.dokus.aura.resources.review_duplicate_label_issue_date
 import tech.dokus.aura.resources.review_duplicate_label_total
-import tech.dokus.aura.resources.review_duplicate_review_later
 import tech.dokus.aura.resources.review_duplicate_same_document
 import tech.dokus.aura.resources.review_duplicate_same_opinion
 import tech.dokus.aura.resources.review_duplicate_same_opinion_detail
@@ -134,7 +133,6 @@ internal fun DesktopDuplicateReviewSurface(
                         totalAmount = resolveDisplayAmount(state),
                         dateDisplay = existingDraft?.sortDate?.toString() ?: "",
                         previewState = state.previewState,
-                        statusLabel = resolveStatusLabel(state),
                         statusColor = MaterialTheme.colorScheme.tertiary,
                         modifier = Modifier.weight(1f),
                     )
@@ -148,7 +146,6 @@ internal fun DesktopDuplicateReviewSurface(
                         totalAmount = incomingTotalDisplay,
                         dateDisplay = incomingDate,
                         previewState = state.incomingPreviewState ?: DocumentPreviewState.NoPreview,
-                        statusLabel = "Processing",
                         statusColor = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.weight(1f),
                     )
@@ -179,31 +176,29 @@ internal fun DesktopDuplicateReviewSurface(
                         onClick = { onIntent(DocumentDetailIntent.ResolvePossibleMatchSame) },
                     )
                 }
-
-                Text(
-                    text = stringResource(Res.string.review_duplicate_review_later),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.textMuted,
-                    modifier = Modifier.clickable { /* skip */ },
-                )
             }
 
             // Bottom bar
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
-            ) {
-                ReviewKeyboardHints(canConfirm = true)
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = Constraints.Stroke.thin)
-                Text(
-                    text = stringResource(Res.string.review_surface_view_full_detail) + " \u2192",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.textMuted,
-                    modifier = Modifier.clickable(onClick = onSwitchToDetail).padding(vertical = Constraints.Spacing.small),
-                )
-            }
+            BottomBar(onSwitchToDetail)
         }
+    }
+}
+
+@Composable
+private fun BottomBar(onSwitchToDetail: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+    ) {
+        ReviewKeyboardHints(canConfirm = true)
+        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant, thickness = Constraints.Stroke.thin)
+        Text(
+            text = stringResource(Res.string.review_surface_view_full_detail) + " \u2192",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.textMuted,
+            modifier = Modifier.clickable(onClick = onSwitchToDetail).padding(vertical = Constraints.Spacing.small),
+        )
     }
 }
 
@@ -221,7 +216,6 @@ private fun DocumentIdentityCard(
     totalAmount: String,
     dateDisplay: String,
     previewState: DocumentPreviewState,
-    statusLabel: String,
     statusColor: Color,
     modifier: Modifier = Modifier,
 ) {
@@ -255,8 +249,6 @@ private fun DocumentIdentityCard(
                     FallbackCard(vendorName, invoiceNumber, totalAmount, dateDisplay)
             }
         }
-
-        Text(text = statusLabel, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = statusColor, modifier = Modifier.align(Alignment.CenterHorizontally))
     }
 }
 

@@ -787,7 +787,6 @@
     <string name="review_surface_accept_and_continue">Accept &amp; continue</string>
     <string name="review_surface_save_and_confirm">Save &amp; confirm</string>
     <string name="review_surface_save_and_continue">Save &amp; continue</string>
-    <string name="review_surface_review_later">Review later</string>
     <string name="review_surface_choose_different">Choose different</string>
     <string name="review_surface_search_contacts">Search contacts</string>
 
@@ -830,7 +829,6 @@
     <string name="review_duplicate_possible_duplicate">Possible duplicate</string>
     <string name="review_duplicate_same_document">Same document</string>
     <string name="review_duplicate_different_document">Different document</string>
-    <string name="review_duplicate_review_later">Review later</string>
     <string name="review_duplicate_existing">EXISTING</string>
     <string name="review_duplicate_incoming">INCOMING</string>
     <string name="review_duplicate_same_opinion">These appear to be the same document</string>

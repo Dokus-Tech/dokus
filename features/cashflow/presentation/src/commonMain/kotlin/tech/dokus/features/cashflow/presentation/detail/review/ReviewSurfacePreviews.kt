@@ -322,7 +322,6 @@ private fun ActionFooterConfirmPreview(
             showChooseDifferent = false,
             onPrimaryAction = {},
             onChooseDifferent = {},
-            onReviewLater = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(Constraints.Spacing.large),
@@ -343,7 +342,6 @@ private fun ActionFooterAcceptContinuePreview(
             showChooseDifferent = false,
             onPrimaryAction = {},
             onChooseDifferent = {},
-            onReviewLater = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(Constraints.Spacing.large),
@@ -364,7 +362,6 @@ private fun ActionFooterLoadingPreview(
             showChooseDifferent = false,
             onPrimaryAction = {},
             onChooseDifferent = {},
-            onReviewLater = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(Constraints.Spacing.large),
@@ -385,7 +382,6 @@ private fun ActionFooterChooseDifferentPreview(
             showChooseDifferent = true,
             onPrimaryAction = {},
             onChooseDifferent = {},
-            onReviewLater = {},
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(Constraints.Spacing.large),

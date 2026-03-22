@@ -161,15 +161,7 @@ internal fun DesktopReviewSurface(
                             },
                             onChooseDifferent = {
                                 onIntent(DocumentDetailIntent.OpenContactSheet)
-                            },
-                            onReviewLater = {
-                                val nextId = state.queueState?.nextDocumentId(
-                                    state.selectedQueueDocumentId ?: state.documentId
-                                )
-                                if (nextId != null) {
-                                    onIntent(DocumentDetailIntent.SelectQueueDocument(nextId))
-                                }
-                            },
+                            }
                         )
                     }
                 }

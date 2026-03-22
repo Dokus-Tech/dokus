@@ -9,14 +9,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.review_surface_accept_and_confirm
 import tech.dokus.aura.resources.review_surface_accept_and_continue
-import tech.dokus.aura.resources.review_surface_confirm
 import tech.dokus.aura.resources.review_surface_choose_different
-import tech.dokus.aura.resources.review_surface_review_later
+import tech.dokus.aura.resources.review_surface_confirm
 import tech.dokus.aura.resources.review_surface_save_and_confirm
 import tech.dokus.aura.resources.review_surface_save_and_continue
 import tech.dokus.foundation.aura.components.PButton
@@ -52,7 +50,6 @@ internal fun ReviewActionFooter(
     showChooseDifferent: Boolean,
     onPrimaryAction: () -> Unit,
     onChooseDifferent: () -> Unit,
-    onReviewLater: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -76,13 +73,6 @@ internal fun ReviewActionFooter(
                 modifier = Modifier.clickable(onClick = onChooseDifferent),
             )
         }
-
-        Text(
-            text = stringResource(Res.string.review_surface_review_later),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.textMuted,
-            modifier = Modifier.clickable(onClick = onReviewLater),
-        )
     }
 }
 
