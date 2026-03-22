@@ -74,8 +74,8 @@ class CashflowProjectionReconciliationTest {
     private val contactId: ContactId get() = ContactId.parse(contactUuid.toString())
 
     private val tenantRepository = TenantRepository()
-    private val documentRepository = DocumentRepository()
     private val ingestionRepository = DocumentIngestionRunRepository()
+    private val documentRepository = DocumentRepository(ingestionRepository)
     private val invoiceRepository = InvoiceRepository(InvoiceNumberGenerator(InvoiceNumberRepository()))
     private val expenseRepository = ExpenseRepository()
     private val creditNoteRepository = CreditNoteRepository()

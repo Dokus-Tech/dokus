@@ -74,8 +74,8 @@ class CreditNoteConfirmationInvariantTest {
     private val tenantId: TenantId get() = TenantId(tenantUuid.toKotlinUuid())
     private val contactId: ContactId get() = ContactId.parse(contactUuid.toString())
 
-    private val documentRepository = DocumentRepository()
     private val ingestionRunRepository = DocumentIngestionRunRepository()
+    private val documentRepository = DocumentRepository(ingestionRunRepository)
     private val cashflowEntriesRepository = CashflowEntriesRepository()
     private val tenantRepository = TenantRepository()
     private val documentLinkRepository = DocumentLinkRepository()

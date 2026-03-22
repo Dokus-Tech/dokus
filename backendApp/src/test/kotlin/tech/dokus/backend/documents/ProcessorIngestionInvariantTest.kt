@@ -46,8 +46,8 @@ class ProcessorIngestionInvariantTest {
     private lateinit var tenantUuid: UUID
     private val tenantId: TenantId get() = TenantId(tenantUuid.toKotlinUuid())
 
-    private val documentRepository = DocumentRepository()
     private val ingestionRunRepository = DocumentIngestionRunRepository()
+    private val documentRepository = DocumentRepository(ingestionRunRepository)
     private val processorIngestionRepository = ProcessorIngestionRepository()
 
     @BeforeEach

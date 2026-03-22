@@ -418,6 +418,7 @@ class DocumentTruthServiceTest {
         tenantId = tenantId,
         documentId = documentId,
         incomingSourceId = incomingSourceId,
+        incomingDocumentId = null,
         reasonType = ReviewReason.MaterialConflict,
         aiSummary = "Test conflict",
         aiConfidence = 0.8,

@@ -59,8 +59,8 @@ class ReceiptConfirmationIdempotencyTest {
     private lateinit var tenantUuid: UUID
     private val tenantId: TenantId get() = TenantId(tenantUuid.toKotlinUuid())
 
-    private val documentRepository = DocumentRepository()
     private val ingestionRepository = DocumentIngestionRunRepository()
+    private val documentRepository = DocumentRepository(ingestionRepository)
     private val expenseRepository = ExpenseRepository()
     private val cashflowEntriesRepository = CashflowEntriesRepository()
     private val tenantRepository = TenantRepository()
