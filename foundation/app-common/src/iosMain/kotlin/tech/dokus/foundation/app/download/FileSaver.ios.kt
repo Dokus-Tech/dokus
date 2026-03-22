@@ -33,7 +33,8 @@ actual class FileSaver {
             val nsData = bytes.usePinned { pinned ->
                 NSData.create(bytes = pinned.addressOf(0), length = bytes.size.toULong())
             }
-            nsData.writeToURL(fileUrl, atomically = true)
+            val success = nsData.writeToURL(fileUrl, atomically = true)
+            if (!success) error("Failed to write file to $fileUrl")
         }
     }
 }

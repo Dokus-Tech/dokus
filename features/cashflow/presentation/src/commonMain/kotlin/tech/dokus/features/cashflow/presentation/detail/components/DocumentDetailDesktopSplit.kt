@@ -86,6 +86,8 @@ internal fun DocumentDetailDesktopSplit(
     onLoadMore: () -> Unit,
     onExit: () -> Unit,
     onDownloadPdf: () -> Unit,
+    isDownloading: Boolean,
+    hasContent: Boolean,
     backLabel: String = "",
     content: @Composable () -> Unit,
     modifier: Modifier = Modifier,
@@ -143,6 +145,8 @@ internal fun DocumentDetailDesktopSplit(
                         vendorName = selectedDoc?.vendorName?.value
                             ?: stringResource(Res.string.document_detail_vendor_fallback),
                         onDownloadPdf = onDownloadPdf,
+                        isDownloading = isDownloading,
+                        hasContent = hasContent,
                     )
 
                     CompositionLocalProvider(LocalIsInDocDetailMode provides true) {
@@ -164,6 +168,8 @@ internal fun DocumentDetailDesktopSplit(
 private fun DetailTitleBar(
     vendorName: String,
     onDownloadPdf: () -> Unit,
+    isDownloading: Boolean,
+    hasContent: Boolean,
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val spacing = MaterialTheme.dokusSpacing
@@ -197,11 +203,14 @@ private fun DetailTitleBar(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(spacing.small),
             ) {
-                PButton(
-                    text = stringResource(Res.string.action_download_pdf),
-                    variant = PButtonVariant.OutlineMuted,
-                    onClick = onDownloadPdf,
-                )
+                if (hasContent) {
+                    PButton(
+                        text = stringResource(Res.string.action_download_pdf),
+                        variant = PButtonVariant.OutlineMuted,
+                        isLoading = isDownloading,
+                        onClick = onDownloadPdf,
+                    )
+                }
                 LockIcon(modifier = Modifier.size(12.dp))
                 Text(
                     text = stringResource(Res.string.document_detail_locked),
@@ -342,6 +351,8 @@ private fun DocumentDetailDesktopSplitPreview(
             onLoadMore = {},
             onExit = {},
             onDownloadPdf = {},
+            isDownloading = false,
+            hasContent = true,
             content = {
                 Box(
                     modifier = Modifier.fillMaxSize(),

@@ -9,6 +9,7 @@ import pro.respawn.flowmvi.plugins.delegate.delegate
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import pro.respawn.flowmvi.plugins.whileSubscribed
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.features.cashflow.presentation.detail.mvi.payment.DocumentPaymentAction
@@ -171,20 +172,7 @@ internal class DocumentDetailContainer(
                     }
 
                     DocumentDetailIntent.DownloadPdf -> {
-                        withState {
-                            val docId = documentId ?: return@withState
-                            val filename = documentRecord?.document?.filename ?: "document.pdf"
-                            updateState { copy(isDownloading = true) }
-                            downloadDocument(docId, filename).fold(
-                                onSuccess = {
-                                    logger.i { "Document $docId downloaded as $filename" }
-                                },
-                                onFailure = { error ->
-                                    logger.e(error) { "Failed to download document $docId" }
-                                },
-                            )
-                            updateState { copy(isDownloading = false) }
-                        }
+                        handleDownloadPdf()
                     }
 
                     else -> {
@@ -193,6 +181,23 @@ internal class DocumentDetailContainer(
                 }
             }
         }
+
+    private suspend fun DocumentDetailCtx.handleDownloadPdf() {
+        var docId: DocumentId? = null
+        var filename = "document.pdf"
+        withState {
+            if (isDownloading) return@withState
+            docId = documentId
+            filename = documentRecord?.document?.filename ?: "document.pdf"
+        }
+        val id = docId ?: return
+        updateState { copy(isDownloading = true) }
+        downloadDocument(id, filename).onFailure { error ->
+            logger.e(error) { "Failed to download document $id" }
+            updateState { copy(actionError = DokusException.Unknown(error)) }
+        }
+        updateState { copy(isDownloading = false) }
+    }
 
     private suspend fun DocumentDetailCtx.dispatchToReducer(intent: DocumentDetailIntent) {
         when (intent) {

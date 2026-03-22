@@ -17,9 +17,10 @@ actual class FileSaver : KoinComponent {
 
     actual suspend fun saveFile(filename: String, bytes: ByteArray) {
         withContext(Dispatchers.IO) {
+            val mimeType = mimeTypeFromFilename(filename)
             val contentValues = ContentValues().apply {
                 put(MediaStore.Downloads.DISPLAY_NAME, filename)
-                put(MediaStore.Downloads.MIME_TYPE, "application/pdf")
+                put(MediaStore.Downloads.MIME_TYPE, mimeType)
                 put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
             }
             val resolver = context.contentResolver
@@ -29,5 +30,17 @@ actual class FileSaver : KoinComponent {
                 output.write(bytes)
             } ?: error("Failed to open output stream for $filename")
         }
+    }
+}
+
+private fun mimeTypeFromFilename(filename: String): String {
+    val extension = filename.substringAfterLast('.', "").lowercase()
+    return when (extension) {
+        "pdf" -> "application/pdf"
+        "png" -> "image/png"
+        "jpg", "jpeg" -> "image/jpeg"
+        "csv" -> "text/csv"
+        "xml" -> "application/xml"
+        else -> "application/octet-stream"
     }
 }
