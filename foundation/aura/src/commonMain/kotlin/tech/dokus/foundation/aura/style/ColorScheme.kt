@@ -226,6 +226,15 @@ val ColorScheme.thText: Color
     get() = if (isDark) Color(ThTextDarkHex) else Color(ThTextLightHex)
 val ColorScheme.borderStrong: Color get() = outline
 
+// Scrim overlay (modal backdrops)
+val ColorScheme.scrim: Color
+    get() = Color.Black.copy(alpha = 0.85f)
+
+// Subtle divider — softer than outlineVariant (0.06), for visual-only separators
+val ColorScheme.divider: Color
+    get() = if (isDark) Color.White.copy(alpha = 0.05f)
+            else Color.Black.copy(alpha = 0.05f)
+
 // Soft semantic background aliases
 val ColorScheme.redSoft: Color get() = errorContainer
 val ColorScheme.greenSoft: Color get() = tertiaryContainer

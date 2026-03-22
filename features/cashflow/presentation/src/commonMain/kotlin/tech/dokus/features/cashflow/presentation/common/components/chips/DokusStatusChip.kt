@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
+import tech.dokus.foundation.aura.style.statusConfirmed
 import tech.dokus.foundation.aura.tooling.TestWrapper
 
 @Composable
@@ -54,7 +55,7 @@ private fun DokusStatusChipPreview(
     TestWrapper(parameters) {
         DokusStatusChip(
             label = "Active",
-            color = Color.Green
+            color = MaterialTheme.colorScheme.statusConfirmed
         )
     }
 }

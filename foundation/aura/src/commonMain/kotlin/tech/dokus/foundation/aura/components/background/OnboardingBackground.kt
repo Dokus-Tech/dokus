@@ -231,7 +231,7 @@ fun OnboardingBackground(
                     val color = when (particle.tone) {
                         ParticleTone.Neutral -> effects.ambientParticleNeutral
                         ParticleTone.Gold -> effects.ambientParticleGold
-                        ParticleTone.Bright -> if (isDark) Color.White else Color(0xFF1F1F1F)
+                        ParticleTone.Bright -> effects.brightParticle
                     }
 
                     val depthAlpha = ParticleDepthAlphaMin + (projected.depth * ParticleDepthAlphaRange)
@@ -268,7 +268,7 @@ fun OnboardingBackground(
                 val jitterY = (0.5f - grainShift) * size.height * 0.04f
                 grain.forEach { p ->
                     drawCircle(
-                        color = (if (isDark) Color.White else Color.Black).copy(alpha = grainAlpha),
+                        color = colors.onBackground.copy(alpha = grainAlpha),
                         radius = 0.7f,
                         center = Offset(
                             x = ((p.x * size.width) + jitterX).coerceIn(0f, size.width),

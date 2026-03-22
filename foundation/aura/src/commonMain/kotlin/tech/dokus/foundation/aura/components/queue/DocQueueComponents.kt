@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
+import tech.dokus.foundation.aura.style.divider
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -162,7 +163,7 @@ fun DocQueueItemRow(
         )
     }
 
-    HorizontalDivider(color = Color.Black.copy(alpha = 0.03f))
+    HorizontalDivider(color = MaterialTheme.colorScheme.divider)
 }
 
 // ---------------------------------------------------------------------------

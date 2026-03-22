@@ -15,7 +15,9 @@ import androidx.compose.ui.Modifier
 import tech.dokus.features.cashflow.presentation.detail.DocumentPreviewState
 import tech.dokus.features.cashflow.presentation.detail.PdfPreviewPane
 import tech.dokus.foundation.aura.constrains.Constraints
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
+import tech.dokus.foundation.aura.style.scrim
 
 /**
  * Fullscreen PDF zoom overlay.
@@ -41,7 +43,7 @@ internal fun PdfZoomOverlay(
         Box(
             modifier = modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.85f))
+                .background(MaterialTheme.colorScheme.scrim)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
