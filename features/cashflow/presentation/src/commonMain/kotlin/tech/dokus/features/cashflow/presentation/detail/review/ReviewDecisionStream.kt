@@ -1,19 +1,18 @@
 package tech.dokus.features.cashflow.presentation.detail.review
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
@@ -23,6 +22,7 @@ import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailIntent
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
 import tech.dokus.features.cashflow.presentation.detail.EditableField
+import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.constrains.Constraints
@@ -145,36 +145,44 @@ private fun CleanContactRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
+    val greenColor = MaterialTheme.colorScheme.tertiary
+
+    DokusCardSurface(
         modifier = modifier
-            .clickable(onClick = onClick)
             .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-            .padding(start = 3.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .clickable(onClick = onClick),
     ) {
-        // Green left border
-        Box(
+        Row(
             modifier = Modifier
-                .size(3.dp, 48.dp)
-                .background(MaterialTheme.colorScheme.tertiary)
-        )
-        Column(
-            modifier = Modifier.padding(Constraints.Spacing.medium),
-            verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall),
+                .fillMaxWidth()
+                .drawBehind {
+                    drawLine(
+                        color = greenColor,
+                        start = Offset(0f, 0f),
+                        end = Offset(0f, size.height),
+                        strokeWidth = 2.dp.toPx(),
+                    )
+                }
+                .padding(Constraints.Spacing.medium),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = name,
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            if (!vatNumber.isNullOrBlank()) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall),
+            ) {
                 Text(
-                    text = vatNumber,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.textMuted,
+                    text = name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
+                if (!vatNumber.isNullOrBlank()) {
+                    Text(
+                        text = vatNumber,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.textMuted,
+                    )
+                }
             }
         }
     }
