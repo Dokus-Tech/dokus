@@ -25,6 +25,7 @@ import tech.dokus.foundation.app.NavContext
 import tech.dokus.foundation.app.ModuleNavGroup
 import tech.dokus.foundation.app.ModuleSettingsGroup
 import tech.dokus.foundation.app.diModules
+import tech.dokus.foundation.app.download.fileSaverModule
 import tech.dokus.foundation.app.network.imageLoaderModule
 import tech.dokus.foundation.aura.model.DesktopNavPlacement
 import tech.dokus.foundation.aura.model.MobileTabConfig
@@ -47,6 +48,7 @@ private val conditionalModules = emptyList<AppModule>()
 val appModules: List<AppModule> = baseAppModules + conditionalModules
 
 private val appDataModules: List<Module> = listOf(
+    fileSaverModule,
     imageLoaderModule,
     authPlatformModule,
     authNetworkModule,

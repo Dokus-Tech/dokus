@@ -46,7 +46,6 @@ internal fun DocumentSourceViewerRoute(
             is DocumentDetailAction.NavigateBack -> navController.popBackStack()
             is DocumentDetailAction.NavigateToEntity -> Unit
             is DocumentDetailAction.NavigateToCashflowEntry -> Unit
-            is DocumentDetailAction.DownloadDocument -> Unit
         }
     }
 

@@ -42,6 +42,7 @@ import tech.dokus.features.cashflow.usecase.GetChatSessionHistoryUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentCountsUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentPagesUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentRecordUseCaseImpl
+import tech.dokus.features.cashflow.usecase.DownloadDocumentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentSourceContentUseCaseImpl
 import tech.dokus.features.cashflow.usecase.GetDocumentSourcePagesUseCaseImpl
 import tech.dokus.features.cashflow.usecase.ObserveDocumentCollectionChangesUseCaseImpl
@@ -88,6 +89,7 @@ import tech.dokus.features.cashflow.usecases.RecordCashflowPaymentUseCase
 import tech.dokus.features.cashflow.usecases.UndoAutoPaymentUseCase
 import tech.dokus.features.cashflow.usecases.ConnectPeppolUseCase
 import tech.dokus.features.cashflow.usecases.DeleteDocumentUseCase
+import tech.dokus.features.cashflow.usecases.DownloadDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetChatConfigurationUseCase
 import tech.dokus.features.cashflow.usecases.GetChatSessionHistoryUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentCountsUseCase
@@ -192,6 +194,7 @@ val cashflowNetworkModule = module {
     singleOf(::GetDocumentPagesUseCaseImpl) bind GetDocumentPagesUseCase::class
     singleOf(::GetDocumentSourcePagesUseCaseImpl) bind GetDocumentSourcePagesUseCase::class
     singleOf(::GetDocumentSourceContentUseCaseImpl) bind GetDocumentSourceContentUseCase::class
+    singleOf(::DownloadDocumentUseCaseImpl) bind DownloadDocumentUseCase::class
     singleOf(::ReprocessDocumentUseCaseImpl) bind ReprocessDocumentUseCase::class
     singleOf(::ResolveDocumentMatchReviewUseCaseImpl) bind ResolveDocumentMatchReviewUseCase::class
     singleOf(::GetProcessingHealthUseCaseImpl) bind GetProcessingHealthUseCase::class

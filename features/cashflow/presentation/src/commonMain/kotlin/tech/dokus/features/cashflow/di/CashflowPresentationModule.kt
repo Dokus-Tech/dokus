@@ -85,6 +85,7 @@ val cashflowViewModelModule = module {
             resolveDocumentMatchReview = get(),
             getContact = get(),
             loadDocumentRecords = get(),
+            downloadDocument = get(),
             paymentContainer = get(),
             previewContainer = get(),
             initialDocumentId = initialDocumentId,

@@ -599,6 +599,12 @@ interface CashflowRemoteDataSource {
     ): Result<DocumentPagesResponse>
 
     /**
+     * Download raw document bytes.
+     * GET /api/v1/documents/{id}/content
+     */
+    suspend fun getDocumentContent(documentId: DocumentId): Result<ByteArray>
+
+    /**
      * Download source bytes for a specific evidence source.
      * GET /api/v1/documents/{id}/sources/{sourceId}/content
      */

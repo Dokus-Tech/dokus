@@ -812,6 +812,13 @@ internal class CashflowRemoteDataSourceImpl(
         }
     }
 
+    override suspend fun getDocumentContent(documentId: DocumentId): Result<ByteArray> {
+        return runCatching {
+            val docIdRoute = Documents.Id(id = documentId.toString())
+            httpClient.get(Documents.Id.Content(parent = docIdRoute)).body()
+        }
+    }
+
     override suspend fun getDocumentSourceContent(
         documentId: DocumentId,
         sourceId: DocumentSourceId

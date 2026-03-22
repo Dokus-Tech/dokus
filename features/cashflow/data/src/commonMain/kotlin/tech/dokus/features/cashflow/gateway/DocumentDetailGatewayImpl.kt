@@ -75,6 +75,10 @@ internal class DocumentDetailGatewayImpl(
         maxPages = maxPages
     )
 
+    override suspend fun getDocumentContent(
+        documentId: DocumentId
+    ) = cashflowRemoteDataSource.getDocumentContent(documentId)
+
     override suspend fun getDocumentSourceContent(
         documentId: DocumentId,
         sourceId: DocumentSourceId

@@ -41,6 +41,7 @@ internal fun MobileDocumentDetailTopBar(
                 PButton(
                     text = stringResource(Res.string.action_download_pdf),
                     variant = PButtonVariant.OutlineMuted,
+                    isLoading = state.isDownloading,
                     onClick = onDownloadPdf,
                 )
             }

@@ -120,6 +120,13 @@ interface ReprocessDocumentUseCase {
 /**
  * Use case for resolving a possible-match review item.
  */
+/**
+ * Use case for downloading a document's raw content and saving it to the device.
+ */
+interface DownloadDocumentUseCase {
+    suspend operator fun invoke(documentId: DocumentId, filename: String): Result<Unit>
+}
+
 interface ResolveDocumentMatchReviewUseCase {
     suspend operator fun invoke(
         reviewId: DocumentMatchReviewId,

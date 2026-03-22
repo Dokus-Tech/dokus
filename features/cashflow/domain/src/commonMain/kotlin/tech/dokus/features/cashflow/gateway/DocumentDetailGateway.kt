@@ -60,6 +60,8 @@ interface DocumentDetailGateway {
         maxPages: Int = 10
     ): Result<DocumentPagesResponse>
 
+    suspend fun getDocumentContent(documentId: DocumentId): Result<ByteArray>
+
     suspend fun getDocumentSourceContent(
         documentId: DocumentId,
         sourceId: DocumentSourceId

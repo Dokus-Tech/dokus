@@ -10,7 +10,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.navigation.compose.currentBackStackEntryAsState
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -22,7 +21,6 @@ import tech.dokus.aura.resources.action_cancel
 import tech.dokus.aura.resources.action_confirm
 import tech.dokus.aura.resources.cashflow_discard_changes_message
 import tech.dokus.aura.resources.cashflow_discard_changes_title
-import tech.dokus.domain.config.DynamicDokusEndpointProvider
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.foundation.aura.extensions.localized
@@ -74,12 +72,10 @@ internal fun DocumentDetailRoute(
     listContacts: ListContactsUseCase = koinInject(),
     observeDocumentRecordEvents: ObserveDocumentRecordEventsUseCase = koinInject(),
     observeDocumentCollectionChanges: ObserveDocumentCollectionChangesUseCase = koinInject(),
-    endpointProvider: DynamicDokusEndpointProvider = koinInject(),
 ) {
     val accessContext = LocalUserAccessContext.current
     val isAccountantReadOnly = accessContext.isBookkeeperConsoleDrillDown
     val navController = LocalNavController.current
-    val uriHandler = LocalUriHandler.current
     val backStackEntry by navController.currentBackStackEntryAsState()
     val initialDocumentId = remember(route.documentId) { DocumentId.parse(route.documentId) }
     val backLabel = route.queueSource.localized
@@ -123,12 +119,6 @@ internal fun DocumentDetailRoute(
                 navController.navigateTo(
                     CashFlowDestination.CashFlowOverview(action.entryId.toString())
                 )
-            }
-            is DocumentDetailAction.DownloadDocument -> {
-                val endpoint = endpointProvider.currentEndpointSnapshot()
-                val url = "${endpoint.protocol}://${endpoint.host}:${endpoint.port}" +
-                    "/api/v1/documents/${action.documentId}/content"
-                uriHandler.openUri(url)
             }
         }
     }

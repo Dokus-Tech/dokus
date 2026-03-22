@@ -17,6 +17,8 @@ import tech.dokus.domain.model.ReprocessResponse
 import tech.dokus.domain.model.UpdateDraftResponse
 import tech.dokus.features.cashflow.gateway.DocumentDetailGateway
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
+import tech.dokus.features.cashflow.usecases.DownloadDocumentUseCase
+import tech.dokus.foundation.app.download.FileSaver
 import tech.dokus.features.cashflow.usecases.UnconfirmDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentPagesUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
@@ -148,6 +150,17 @@ internal class GetDocumentSourceContentUseCaseImpl(
             documentId = documentId,
             sourceId = sourceId
         )
+    }
+}
+
+internal class DownloadDocumentUseCaseImpl(
+    private val documentDetailGateway: DocumentDetailGateway,
+    private val fileSaver: FileSaver,
+) : DownloadDocumentUseCase {
+    override suspend fun invoke(documentId: DocumentId, filename: String): Result<Unit> {
+        return documentDetailGateway.getDocumentContent(documentId).mapCatching { bytes ->
+            fileSaver.saveFile(filename, bytes)
+        }
     }
 }
 

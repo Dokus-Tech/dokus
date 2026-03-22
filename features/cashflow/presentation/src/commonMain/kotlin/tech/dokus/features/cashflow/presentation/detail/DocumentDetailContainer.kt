@@ -17,6 +17,7 @@ import tech.dokus.features.cashflow.presentation.detail.mvi.preview.DocumentPrev
 import tech.dokus.features.cashflow.presentation.detail.mvi.preview.DocumentPreviewContainer
 import tech.dokus.features.cashflow.presentation.detail.route.toDocQueueItem
 import tech.dokus.features.cashflow.usecases.ConfirmDocumentUseCase
+import tech.dokus.features.cashflow.usecases.DownloadDocumentUseCase
 import tech.dokus.features.cashflow.usecases.GetDocumentRecordUseCase
 import tech.dokus.features.cashflow.usecases.LoadDocumentRecordsUseCase
 import tech.dokus.features.cashflow.usecases.RejectDocumentUseCase
@@ -62,6 +63,7 @@ internal class DocumentDetailContainer(
     private val resolveDocumentMatchReview: ResolveDocumentMatchReviewUseCase,
     private val getContact: GetContactUseCase,
     private val loadDocumentRecords: LoadDocumentRecordsUseCase,
+    private val downloadDocument: DownloadDocumentUseCase,
     private val paymentContainer: DocumentPaymentContainer,
     private val previewContainer: DocumentPreviewContainer,
     private val initialDocumentId: DocumentId,
@@ -171,7 +173,17 @@ internal class DocumentDetailContainer(
                     DocumentDetailIntent.DownloadPdf -> {
                         withState {
                             val docId = documentId ?: return@withState
-                            action(DocumentDetailAction.DownloadDocument(docId))
+                            val filename = documentRecord?.document?.filename ?: "document.pdf"
+                            updateState { copy(isDownloading = true) }
+                            downloadDocument(docId, filename).fold(
+                                onSuccess = {
+                                    logger.i { "Document $docId downloaded as $filename" }
+                                },
+                                onFailure = { error ->
+                                    logger.e(error) { "Failed to download document $docId" }
+                                },
+                            )
+                            updateState { copy(isDownloading = false) }
                         }
                     }
 
