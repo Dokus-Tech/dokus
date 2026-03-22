@@ -166,7 +166,7 @@ data class DocumentDetailState(
     val contactSheetContacts: DokusState<List<ContactDto>> = DokusState.idle(),
 
     // === Download ===
-    val isDownloading: Boolean = false,
+    val downloadState: DownloadState = DownloadState.Idle,
 
     // === Action error ===
     val actionError: DokusException? = null,
@@ -454,6 +454,13 @@ private val DocDto?.displayContextDescription: String?
  * Contact match status - captures uncertainty, not just null.
  * Used for policy-based attention signals in the UI.
  */
+@Immutable
+enum class DownloadState {
+    Idle,
+    Downloading,
+    Failed,
+}
+
 enum class ContactMatchStatus {
     /** Bound via explicit user selection. */
     Matched,

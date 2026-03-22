@@ -30,6 +30,7 @@
     <string name="action_zoom_in">Zoom in</string>
     <string name="action_zoom_out">Zoom out</string>
     <string name="action_download_pdf">\u2193 PDF</string>
+    <string name="action_download_retry">\u21bb Retry</string>
 
     <!-- Common States -->
     <string name="state_loading">Loading...</string>

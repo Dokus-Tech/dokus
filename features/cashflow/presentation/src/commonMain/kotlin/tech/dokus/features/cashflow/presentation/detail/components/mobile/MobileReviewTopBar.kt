@@ -15,6 +15,7 @@ import tech.dokus.aura.resources.action_download_pdf
 import tech.dokus.aura.resources.nav_documents
 import tech.dokus.features.cashflow.presentation.common.components.chips.DokusStatusChip
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
+import tech.dokus.features.cashflow.presentation.detail.components.DownloadPdfButton
 import tech.dokus.features.cashflow.presentation.detail.SourceEvidenceViewerState
 import tech.dokus.features.cashflow.presentation.detail.statusBadgeLocalized
 import tech.dokus.foundation.aura.components.PButton
@@ -38,10 +39,8 @@ internal fun MobileDocumentDetailTopBar(
         onBackClick = onBackClick,
         actions = {
             if (state.hasContent) {
-                PButton(
-                    text = stringResource(Res.string.action_download_pdf),
-                    variant = PButtonVariant.OutlineMuted,
-                    isLoading = state.isDownloading,
+                DownloadPdfButton(
+                    downloadState = state.downloadState,
                     onClick = onDownloadPdf,
                 )
             }

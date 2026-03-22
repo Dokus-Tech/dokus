@@ -9,7 +9,6 @@ import pro.respawn.flowmvi.plugins.delegate.delegate
 import pro.respawn.flowmvi.plugins.init
 import pro.respawn.flowmvi.plugins.reduce
 import pro.respawn.flowmvi.plugins.whileSubscribed
-import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.features.cashflow.presentation.documents.mvi.DocumentsState
 import tech.dokus.features.cashflow.presentation.detail.mvi.payment.DocumentPaymentAction
@@ -186,17 +185,21 @@ internal class DocumentDetailContainer(
         var docId: DocumentId? = null
         var filename = "document.pdf"
         withState {
-            if (isDownloading) return@withState
+            if (downloadState == DownloadState.Downloading) return@withState
             docId = documentId
             filename = documentRecord?.document?.filename ?: "document.pdf"
         }
         val id = docId ?: return
-        updateState { copy(isDownloading = true) }
-        downloadDocument(id, filename).onFailure { error ->
-            logger.e(error) { "Failed to download document $id" }
-            updateState { copy(actionError = DokusException.Unknown(error)) }
-        }
-        updateState { copy(isDownloading = false) }
+        updateState { copy(downloadState = DownloadState.Downloading) }
+        downloadDocument(id, filename).fold(
+            onSuccess = {
+                updateState { copy(downloadState = DownloadState.Idle) }
+            },
+            onFailure = { error ->
+                logger.e(error) { "Failed to download document $id" }
+                updateState { copy(downloadState = DownloadState.Failed) }
+            },
+        )
     }
 
     private suspend fun DocumentDetailCtx.dispatchToReducer(intent: DocumentDetailIntent) {

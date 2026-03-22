@@ -89,10 +89,8 @@ internal fun ReviewTopBar(
             },
             actions = {
                 if (state.hasContent) {
-                    PButton(
-                        text = stringResource(Res.string.action_download_pdf),
-                        variant = PButtonVariant.OutlineMuted,
-                        isLoading = state.isDownloading,
+                    DownloadPdfButton(
+                        downloadState = state.downloadState,
                         onClick = onDownloadPdf,
                     )
                 }

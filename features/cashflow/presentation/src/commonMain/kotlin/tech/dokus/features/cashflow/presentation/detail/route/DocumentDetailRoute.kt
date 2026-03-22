@@ -251,7 +251,7 @@ internal fun DocumentDetailRoute(
                 },
                 onExit = requestBackNavigation,
                 onDownloadPdf = { dispatchIntent(DocumentDetailIntent.DownloadPdf) },
-                isDownloading = state.isDownloading,
+                downloadState = state.downloadState,
                 hasContent = state.hasContent,
                 backLabel = backLabel,
                 content = reviewContent,

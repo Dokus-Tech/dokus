@@ -40,6 +40,7 @@ import tech.dokus.aura.resources.action_download_pdf
 import tech.dokus.aura.resources.document_detail_locked
 import tech.dokus.aura.resources.document_detail_vendor_fallback
 import tech.dokus.domain.DisplayName
+import tech.dokus.features.cashflow.presentation.detail.DownloadState
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.DocumentId
@@ -86,7 +87,7 @@ internal fun DocumentDetailDesktopSplit(
     onLoadMore: () -> Unit,
     onExit: () -> Unit,
     onDownloadPdf: () -> Unit,
-    isDownloading: Boolean,
+    downloadState: DownloadState,
     hasContent: Boolean,
     backLabel: String = "",
     content: @Composable () -> Unit,
@@ -145,7 +146,7 @@ internal fun DocumentDetailDesktopSplit(
                         vendorName = selectedDoc?.vendorName?.value
                             ?: stringResource(Res.string.document_detail_vendor_fallback),
                         onDownloadPdf = onDownloadPdf,
-                        isDownloading = isDownloading,
+                        downloadState = downloadState,
                         hasContent = hasContent,
                     )
 
@@ -168,7 +169,7 @@ internal fun DocumentDetailDesktopSplit(
 private fun DetailTitleBar(
     vendorName: String,
     onDownloadPdf: () -> Unit,
-    isDownloading: Boolean,
+    downloadState: DownloadState,
     hasContent: Boolean,
 ) {
     val colorScheme = MaterialTheme.colorScheme
@@ -204,10 +205,8 @@ private fun DetailTitleBar(
                 horizontalArrangement = Arrangement.spacedBy(spacing.small),
             ) {
                 if (hasContent) {
-                    PButton(
-                        text = stringResource(Res.string.action_download_pdf),
-                        variant = PButtonVariant.OutlineMuted,
-                        isLoading = isDownloading,
+                    DownloadPdfButton(
+                        downloadState = downloadState,
                         onClick = onDownloadPdf,
                     )
                 }
@@ -351,7 +350,7 @@ private fun DocumentDetailDesktopSplitPreview(
             onLoadMore = {},
             onExit = {},
             onDownloadPdf = {},
-            isDownloading = false,
+            downloadState = DownloadState.Idle,
             hasContent = true,
             content = {
                 Box(
