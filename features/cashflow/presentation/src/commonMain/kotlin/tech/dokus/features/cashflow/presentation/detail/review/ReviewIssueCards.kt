@@ -23,9 +23,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import tech.dokus.foundation.aura.style.amberWhisper
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.review_issue_amount_missing_subtotal
@@ -54,7 +58,8 @@ import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
 
-private val AccentBorderWidth = 3.dp
+private val AccentBorderWidth = 2.dp
+private val SuggestionShape = androidx.compose.foundation.shape.RoundedCornerShape(8.dp)
 
 // =============================
 // Contact Issue Card
@@ -79,30 +84,18 @@ internal fun ContactIssueCard(
 
         when (val contact = issue.contact) {
             is ResolvedContact.Suggested -> {
-                // "We think this is:"
                 Text(
                     text = stringResource(Res.string.review_issue_contact_suggested),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                // Suggestion card with amber left border
                 SuggestionRow(
                     name = contact.name,
                     vatNumber = contact.vatNumber,
                     onClick = onAcceptSuggestion,
                 )
-                // "Choose different" secondary action
-                Text(
-                    text = stringResource(Res.string.review_surface_choose_different),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.textMuted,
-                    modifier = Modifier
-                        .clickable(onClick = onChooseDifferent)
-                        .align(Alignment.CenterHorizontally),
-                )
             }
             is ResolvedContact.Detected -> {
-                // "We think this is:" — with detected data
                 Text(
                     text = stringResource(Res.string.review_issue_contact_suggested),
                     style = MaterialTheme.typography.bodyMedium,
@@ -113,34 +106,16 @@ internal fun ContactIssueCard(
                     vatNumber = contact.vatNumber,
                     onClick = onChooseDifferent,
                 )
-                Text(
-                    text = stringResource(Res.string.review_surface_choose_different),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.textMuted,
-                    modifier = Modifier
-                        .clickable(onClick = onChooseDifferent)
-                        .align(Alignment.CenterHorizontally),
-                )
             }
             is ResolvedContact.Unknown -> {
-                // "We couldn't match this vendor automatically."
                 Text(
                     text = stringResource(Res.string.review_issue_contact_unknown),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Text(
-                    text = stringResource(Res.string.review_surface_search_contacts),
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier
-                        .clickable(onClick = onChooseDifferent)
-                        .align(Alignment.CenterHorizontally),
-                )
             }
             is ResolvedContact.Linked -> {
-                // Should not happen in an issue card — linked contacts don't produce issues
+                // Should not happen — linked contacts don't produce issues
             }
         }
     }
@@ -153,30 +128,39 @@ private fun SuggestionRow(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val amberColor = MaterialTheme.colorScheme.primary
+
     Row(
         modifier = modifier
             .fillMaxWidth()
+            .clip(SuggestionShape)
+            .background(MaterialTheme.colorScheme.amberWhisper)
+            .drawBehind {
+                // 2dp amber left border accent
+                drawLine(
+                    color = amberColor,
+                    start = Offset(0f, 0f),
+                    end = Offset(0f, size.height),
+                    strokeWidth = AccentBorderWidth.toPx(),
+                )
+            }
             .clickable(onClick = onClick)
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-            .padding(start = AccentBorderWidth),
+            .padding(
+                start = Constraints.Spacing.medium,
+                end = Constraints.Spacing.medium,
+                top = Constraints.Spacing.medium,
+                bottom = Constraints.Spacing.medium,
+            ),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Amber left border accent
-        Box(
-            modifier = Modifier
-                .width(AccentBorderWidth)
-                .height(64.dp)
-                .background(MaterialTheme.colorScheme.primary)
-        )
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(Constraints.Spacing.medium),
+            modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.xxSmall),
         ) {
             Text(
                 text = name,
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

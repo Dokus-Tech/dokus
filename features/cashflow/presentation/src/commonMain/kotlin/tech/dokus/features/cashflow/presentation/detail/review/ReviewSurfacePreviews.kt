@@ -329,7 +329,9 @@ private fun ActionFooterConfirmPreview(
             actionType = ReviewActionType.Confirm,
             isEnabled = true,
             isLoading = false,
+            showChooseDifferent = false,
             onPrimaryAction = {},
+            onChooseDifferent = {},
             onReviewLater = {},
             modifier = Modifier
                 .fillMaxWidth()
@@ -348,7 +350,9 @@ private fun ActionFooterAcceptContinuePreview(
             actionType = ReviewActionType.AcceptAndContinue,
             isEnabled = true,
             isLoading = false,
+            showChooseDifferent = false,
             onPrimaryAction = {},
+            onChooseDifferent = {},
             onReviewLater = {},
             modifier = Modifier
                 .fillMaxWidth()
@@ -367,7 +371,9 @@ private fun ActionFooterLoadingPreview(
             actionType = ReviewActionType.AcceptAndConfirm,
             isEnabled = true,
             isLoading = true,
+            showChooseDifferent = false,
             onPrimaryAction = {},
+            onChooseDifferent = {},
             onReviewLater = {},
             modifier = Modifier
                 .fillMaxWidth()

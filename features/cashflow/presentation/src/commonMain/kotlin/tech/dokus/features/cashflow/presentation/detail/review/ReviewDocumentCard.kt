@@ -1,8 +1,12 @@
 package tech.dokus.features.cashflow.presentation.detail.review
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
@@ -24,12 +28,14 @@ import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.style.textMuted
 
 private val CardWidth = 180.dp
+private val CardMinHeight = 240.dp
 
 /**
- * Small document thumbnail card shown in the review surface.
+ * Document thumbnail card shown in the review surface.
  *
- * Displays the PDF first page (via PdfThumbnail) with vendor name,
- * source type, and amount below. Clicking opens PDF zoom.
+ * Sized to match the content area height. Displays a PDF first page
+ * thumbnail with vendor name, source type, and amount inside a card.
+ * Clicking opens PDF zoom.
  */
 @Composable
 internal fun ReviewDocumentCard(
@@ -45,16 +51,18 @@ internal fun ReviewDocumentCard(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
     ) {
-        // PDF thumbnail
         DokusCardSurface(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = CardMinHeight)
+                .clickable(onClick = onZoomClick),
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(Constraints.Spacing.medium),
+                    .padding(Constraints.Spacing.large),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
+                verticalArrangement = Arrangement.Center,
             ) {
                 val (firstPageUrl, totalPages, isLoading) = when (previewState) {
                     is DocumentPreviewState.Ready -> Triple(
@@ -75,6 +83,8 @@ internal fun ReviewDocumentCard(
                     onClick = onZoomClick,
                 )
 
+                Spacer(modifier = Modifier.height(Constraints.Spacing.large))
+
                 Text(
                     text = vendorName,
                     style = MaterialTheme.typography.labelMedium,
@@ -86,12 +96,16 @@ internal fun ReviewDocumentCard(
                     modifier = Modifier.fillMaxWidth(),
                 )
 
+                Spacer(modifier = Modifier.height(Constraints.Spacing.xxSmall))
+
                 Text(
                     text = sourceLabel,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.textMuted,
                     textAlign = TextAlign.Center,
                 )
+
+                Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
                 Text(
                     text = totalAmount,

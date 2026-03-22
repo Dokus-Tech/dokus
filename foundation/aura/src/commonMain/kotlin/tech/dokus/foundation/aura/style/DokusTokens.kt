@@ -77,7 +77,7 @@ data class DokusSizing(
 data class DokusRadii(
     val badge: Dp = 4.dp,
     val input: Dp = 6.dp,
-    val button: Dp = 7.dp,
+    val button: Dp = 8.dp,
     val card: Dp = 10.dp,
     val window: Dp = 16.dp,
 )

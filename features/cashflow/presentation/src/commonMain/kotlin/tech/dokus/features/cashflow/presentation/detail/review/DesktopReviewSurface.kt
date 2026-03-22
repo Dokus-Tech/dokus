@@ -116,8 +116,9 @@ internal fun DesktopReviewSurface(
                     .weight(1f)
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xLarge),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Left: Document thumbnail card
+                // Left: Document thumbnail card — vertically centered, matching content height
                 ReviewDocumentCard(
                     vendorName = resolveVendorName(state),
                     sourceLabel = resolveSourceLabel(state),
@@ -130,7 +131,6 @@ internal fun DesktopReviewSurface(
                 Column(
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxHeight()
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.large),
                 ) {
@@ -158,11 +158,13 @@ internal fun DesktopReviewSurface(
                     Spacer(modifier = Modifier.height(Constraints.Spacing.small))
 
                     // Action footer
+                    val hasContactIssue = issues.getOrNull(activeIssueIndex) is ReviewIssue.ContactIssue
                     if (!isAccountantReadOnly) {
                         ReviewActionFooter(
                             actionType = actionType,
                             isEnabled = if (issues.isEmpty()) state.canConfirm else true,
                             isLoading = state.isConfirming,
+                            showChooseDifferent = hasContactIssue,
                             onPrimaryAction = {
                                 handlePrimaryAction(
                                     issues = issues,
@@ -170,8 +172,10 @@ internal fun DesktopReviewSurface(
                                     onIntent = onIntent,
                                 )
                             },
+                            onChooseDifferent = {
+                                onIntent(DocumentDetailIntent.OpenContactSheet)
+                            },
                             onReviewLater = {
-                                // Skip to next document in queue
                                 val nextId = state.queueState?.nextDocumentId(state.selectedQueueDocumentId ?: state.documentId)
                                 if (nextId != null) {
                                     onIntent(DocumentDetailIntent.SelectQueueDocument(nextId))

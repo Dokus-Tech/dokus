@@ -15,6 +15,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.review_surface_accept_and_confirm
 import tech.dokus.aura.resources.review_surface_accept_and_continue
 import tech.dokus.aura.resources.review_surface_confirm
+import tech.dokus.aura.resources.review_surface_choose_different
 import tech.dokus.aura.resources.review_surface_review_later
 import tech.dokus.aura.resources.review_surface_save_and_confirm
 import tech.dokus.aura.resources.review_surface_save_and_continue
@@ -39,21 +40,25 @@ internal enum class ReviewActionType {
 }
 
 /**
- * Primary action button + "Review later" text link.
+ * Primary action button + optional "Choose different" + "Review later" text links.
+ *
+ * Order matches mockup: CTA → "Choose different" → "Review later"
  */
 @Composable
 internal fun ReviewActionFooter(
     actionType: ReviewActionType,
     isEnabled: Boolean,
     isLoading: Boolean,
+    showChooseDifferent: Boolean,
     onPrimaryAction: () -> Unit,
+    onChooseDifferent: () -> Unit,
     onReviewLater: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.medium),
+        verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
     ) {
         PButton(
             text = actionType.label(),
@@ -63,10 +68,18 @@ internal fun ReviewActionFooter(
             onClick = onPrimaryAction,
         )
 
+        if (showChooseDifferent) {
+            Text(
+                text = stringResource(Res.string.review_surface_choose_different),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.textMuted,
+                modifier = Modifier.clickable(onClick = onChooseDifferent),
+            )
+        }
+
         Text(
             text = stringResource(Res.string.review_surface_review_later),
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Medium,
+            style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.textMuted,
             modifier = Modifier.clickable(onClick = onReviewLater),
         )
