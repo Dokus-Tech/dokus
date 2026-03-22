@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -29,23 +28,19 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
-import tech.dokus.aura.resources.review_surface_needs_review
 import tech.dokus.aura.resources.review_surface_view_full_detail
+import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.model.sortDate
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailIntent
+import tech.dokus.features.cashflow.presentation.detail.DocumentDetailQueueState
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
 import tech.dokus.features.cashflow.presentation.detail.mvi.preview.DocumentPreviewIntent
-import tech.dokus.domain.ids.DocumentId
-import tech.dokus.features.cashflow.presentation.detail.DocumentDetailQueueState
 import tech.dokus.foundation.aura.components.badges.SourceBadge
 import tech.dokus.foundation.aura.components.badges.toUiSource
-import tech.dokus.foundation.aura.components.status.StatusDot
-import tech.dokus.foundation.aura.components.status.StatusDotType
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.extensions.localizedUppercase
 import tech.dokus.foundation.aura.style.textMuted
@@ -104,11 +99,6 @@ internal fun DesktopReviewSurface(
                 .padding(Constraints.Spacing.large),
             verticalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
         ) {
-            // Header: status dot + "View full detail →"
-            ReviewHeader(
-                onViewDetail = onSwitchToDetail,
-            )
-
             // Main content: thumbnail (left) + decision stream (right)
             Row(
                 modifier = Modifier
@@ -208,37 +198,6 @@ internal fun DesktopReviewSurface(
             onLoadMore = { maxPages ->
                 onIntent(DocumentDetailIntent.Preview(DocumentPreviewIntent.LoadMorePages(maxPages)))
             },
-        )
-    }
-}
-
-@Composable
-private fun ReviewHeader(
-    onViewDetail: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.small),
-        ) {
-            StatusDot(type = StatusDotType.Warning, size = 8.dp)
-            Text(
-                text = stringResource(Res.string.review_surface_needs_review),
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-        }
-        Text(
-            text = stringResource(Res.string.review_surface_view_full_detail) + " \u2192",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.textMuted,
-            modifier = Modifier.clickable(onClick = onViewDetail),
         )
     }
 }

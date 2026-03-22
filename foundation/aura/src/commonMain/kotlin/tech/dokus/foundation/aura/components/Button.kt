@@ -22,10 +22,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -112,7 +112,12 @@ private fun PButtonDefault(
     Button(
         modifier = modifier,
         onClick = onClick,
-        enabled = isEnabled && !isLoading
+        enabled = isEnabled && !isLoading,
+        shape = MaterialTheme.shapes.small,
+        contentPadding = PaddingValues(
+            horizontal = Constraints.Spacing.large,
+            vertical = Constraints.Spacing.small
+        ),
     ) {
         if (isLoading) {
             CircularProgressIndicator(
