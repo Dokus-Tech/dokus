@@ -2,7 +2,6 @@
 
 package tech.dokus.features.cashflow.presentation.detail.review
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,9 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.features.cashflow.presentation.detail.DocumentPreviewState
-import tech.dokus.features.cashflow.presentation.detail.components.previewReviewContentState
 import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
@@ -94,9 +91,6 @@ private fun ReviewDocumentCardPreview(
 ) {
     TestWrapper(parameters) {
         ReviewDocumentCard(
-            vendorName = "Sky Hotel",
-            sourceLabel = "PDF",
-            totalAmount = "\u20AC 2.589,70",
             previewState = DocumentPreviewState.NoPreview,
             onZoomClick = {},
             modifier = Modifier.padding(Constraints.Spacing.large),

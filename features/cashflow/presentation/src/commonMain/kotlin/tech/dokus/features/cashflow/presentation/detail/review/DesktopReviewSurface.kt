@@ -7,11 +7,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -35,7 +35,6 @@ import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.review_surface_needs_review
 import tech.dokus.aura.resources.review_surface_view_full_detail
-import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.domain.model.sortDate
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailIntent
@@ -114,15 +113,13 @@ internal fun DesktopReviewSurface(
             Row(
                 modifier = Modifier
                     .weight(1f)
-                    .fillMaxWidth(),
+                    .widthIn(max = 780.dp)
+                    .align(Alignment.CenterHorizontally),
                 horizontalArrangement = Arrangement.spacedBy(Constraints.Spacing.xLarge),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // Left: Document thumbnail card — vertically centered, matching content height
+                // Left: Document thumbnail — PDF only, no text
                 ReviewDocumentCard(
-                    vendorName = resolveVendorName(state),
-                    sourceLabel = resolveSourceLabel(state),
-                    totalAmount = resolveDisplayAmount(state),
                     previewState = state.previewState,
                     onZoomClick = { showZoom = true },
                 )
