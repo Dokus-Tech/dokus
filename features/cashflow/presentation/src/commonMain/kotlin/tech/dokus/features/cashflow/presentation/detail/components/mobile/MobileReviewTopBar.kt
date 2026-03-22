@@ -42,6 +42,7 @@ internal fun MobileDocumentDetailTopBar(
                 DownloadPdfButton(
                     downloadState = state.downloadState,
                     onClick = onDownloadPdf,
+                    formatLabel = state.downloadFormatLabel,
                 )
             }
             DokusStatusChip(

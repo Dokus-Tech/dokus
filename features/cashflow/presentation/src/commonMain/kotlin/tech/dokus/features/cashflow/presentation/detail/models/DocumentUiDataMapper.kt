@@ -342,4 +342,4 @@ private val SHORT_MONTHS = arrayOf(
 )
 
 private fun kotlinx.datetime.LocalDate.toShortDisplay(): String =
-    "${SHORT_MONTHS[monthNumber - 1]} $dayOfMonth"
+    "${SHORT_MONTHS[month.ordinal]} $day"

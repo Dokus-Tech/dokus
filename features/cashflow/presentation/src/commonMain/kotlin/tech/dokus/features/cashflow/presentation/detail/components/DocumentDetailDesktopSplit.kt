@@ -89,6 +89,7 @@ internal fun DocumentDetailDesktopSplit(
     onDownloadPdf: () -> Unit,
     downloadState: DownloadState,
     hasContent: Boolean,
+    downloadFormatLabel: String = "PDF",
     backLabel: String = "",
     content: @Composable () -> Unit,
     modifier: Modifier = Modifier,
@@ -148,6 +149,7 @@ internal fun DocumentDetailDesktopSplit(
                         onDownloadPdf = onDownloadPdf,
                         downloadState = downloadState,
                         hasContent = hasContent,
+                        downloadFormatLabel = downloadFormatLabel,
                     )
 
                     CompositionLocalProvider(LocalIsInDocDetailMode provides true) {
@@ -171,6 +173,7 @@ private fun DetailTitleBar(
     onDownloadPdf: () -> Unit,
     downloadState: DownloadState,
     hasContent: Boolean,
+    downloadFormatLabel: String = "PDF",
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val spacing = MaterialTheme.dokusSpacing
@@ -208,6 +211,7 @@ private fun DetailTitleBar(
                     DownloadPdfButton(
                         downloadState = downloadState,
                         onClick = onDownloadPdf,
+                        formatLabel = downloadFormatLabel,
                     )
                 }
                 LockIcon(modifier = Modifier.size(12.dp))

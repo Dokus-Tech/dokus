@@ -92,6 +92,7 @@ internal fun ReviewTopBar(
                     DownloadPdfButton(
                         downloadState = state.downloadState,
                         onClick = onDownloadPdf,
+                        formatLabel = state.downloadFormatLabel,
                     )
                 }
             },

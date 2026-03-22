@@ -12,6 +12,7 @@ import tech.dokus.aura.resources.document_source_uploaded_attachment
 import tech.dokus.aura.resources.contacts_email
 import tech.dokus.aura.resources.contacts_peppol
 import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.foundation.aura.style.amberWhisper
 import tech.dokus.foundation.aura.style.statusWarning
 import tech.dokus.foundation.aura.style.textMuted
@@ -58,3 +59,41 @@ val DocumentSource.viewerHeaderBackgroundColorized: Color
         DocumentSource.Upload,
         DocumentSource.Manual -> MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f)
     }
+
+/**
+ * Derives a human-readable format label from the source's actual content type/filename.
+ * Examples: "PDF", "CSV", "XML", "XML + PDF"
+ */
+val DocumentSourceDto.formatLabel: String
+    get() = when {
+        sourceChannel == DocumentSource.Peppol -> {
+            val hasPdf = contentType?.contains("pdf") == true ||
+                filename?.endsWith(".pdf", ignoreCase = true) == true
+            if (hasPdf) "XML + PDF" else "XML"
+        }
+        else -> contentTypeToFormatLabel(contentType)
+            ?: filenameToFormatLabel(filename)
+            ?: when (sourceChannel) {
+                DocumentSource.Upload -> "PDF"
+                DocumentSource.Email -> "Email"
+                DocumentSource.Manual -> "Manual"
+                DocumentSource.Peppol -> "XML"
+            }
+    }
+
+private fun contentTypeToFormatLabel(contentType: String?): String? = when {
+    contentType == null -> null
+    contentType.contains("pdf") -> "PDF"
+    contentType.contains("csv") -> "CSV"
+    contentType.contains("xml") -> "XML"
+    else -> null
+}
+
+private fun filenameToFormatLabel(filename: String?): String? = when {
+    filename == null -> null
+    filename.endsWith(".pdf", ignoreCase = true) -> "PDF"
+    filename.endsWith(".csv", ignoreCase = true) -> "CSV"
+    filename.endsWith(".xml", ignoreCase = true) -> "XML"
+    filename.endsWith(".coda", ignoreCase = true) -> "CODA"
+    else -> null
+}

@@ -253,6 +253,7 @@ internal fun DocumentDetailRoute(
                 onDownloadPdf = { dispatchIntent(DocumentDetailIntent.DownloadPdf) },
                 downloadState = state.downloadState,
                 hasContent = state.hasContent,
+                downloadFormatLabel = state.downloadFormatLabel,
                 backLabel = backLabel,
                 content = reviewContent,
             )
