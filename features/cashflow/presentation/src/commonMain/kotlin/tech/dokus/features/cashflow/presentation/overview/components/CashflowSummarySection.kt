@@ -57,7 +57,7 @@ internal fun CashflowSummarySection(
 ) {
     val currencySymbol = stringResource(Res.string.currency_symbol_eur)
     val netAmountText = formatNetAmount(summary.netAmount, currencySymbol)
-    val netColor = if (summary.netAmount >= Money.ZERO) {
+    val netColor = if (!summary.netAmount.isNegative) {
         MaterialTheme.colorScheme.positionPositive
     } else {
         MaterialTheme.colorScheme.positionNegative
@@ -127,16 +127,15 @@ internal fun CashflowSummarySection(
 // Helper functions
 
 private fun formatNetAmount(amount: Money, currencySymbol: String): String {
-    val isNegative = amount < Money.ZERO
-    val absAmount = if (isNegative) -amount else amount
+    val absAmount = if (amount.isNegative) -amount else amount
     return buildString {
-        if (isNegative) {
+        if (amount.isNegative) {
             append("\u2212") // Typographic minus
-        } else if (amount > Money.ZERO) {
+        } else if (amount.isPositive) {
             append("+")
         }
         append(currencySymbol)
-        append(absAmount.toDisplayString())
+        append(absAmount.formatAmount())
     }
 }
 
@@ -154,7 +153,7 @@ private fun formatBreakdown(
         CashflowViewMode.Upcoming, CashflowViewMode.Overdue -> stringResource(Res.string.cashflow_summary_out)
         CashflowViewMode.History -> stringResource(Res.string.cashflow_summary_paid)
     }
-    return "$inLabel $currencySymbol${summary.totalIn.toDisplayString()} \u00b7 $outLabel $currencySymbol${summary.totalOut.toDisplayString()}"
+    return "$inLabel $currencySymbol${summary.totalIn.formatAmount()} \u00b7 $outLabel $currencySymbol${summary.totalOut.formatAmount()}"
 }
 
 @Preview

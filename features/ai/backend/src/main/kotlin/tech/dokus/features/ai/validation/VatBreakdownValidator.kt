@@ -2,6 +2,7 @@ package tech.dokus.features.ai.validation
 
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.model.VatBreakdownEntryDto
 import kotlin.math.abs
 
@@ -22,8 +23,9 @@ object VatBreakdownValidator {
             return@buildList
         }
 
-        val baseSum = Money(vatBreakdown.sumOf { it.base })
-        val amountSum = Money(vatBreakdown.sumOf { it.amount })
+        val currency = subtotal?.currency ?: vatAmount?.currency ?: Currency.Eur
+        val baseSum = Money(vatBreakdown.sumOf { it.base }, currency)
+        val amountSum = Money(vatBreakdown.sumOf { it.amount }, currency)
 
         if (subtotal == null) {
             add(missingBreakdown(required, "Subtotal missing, cannot verify VAT breakdown base sum"))
@@ -39,7 +41,7 @@ object VatBreakdownValidator {
 
         vatBreakdown.forEachIndexed { index, entry ->
             val impliedRateCheck = BelgianVatRateValidator
-                .verify(Money(entry.base), Money(entry.amount), documentDate, null)
+                .verify(Money(entry.base, currency), Money(entry.amount, currency), documentDate, null)
                 .copy(field = "vatBreakdown[$index].impliedRate")
             add(impliedRateCheck)
 
@@ -70,15 +72,15 @@ object VatBreakdownValidator {
             AuditCheck.passed(
                 type = CheckType.VAT_BREAKDOWN,
                 field = field,
-                message = "$label verified: ${actual.toDisplayString()}"
+                message = "$label verified: ${actual.formatAmount()}"
             )
         } else {
             AuditCheck.warning(
                 type = CheckType.VAT_BREAKDOWN,
                 field = field,
-                message = "$label mismatch: ${actual.toDisplayString()} != ${expected.toDisplayString()}",
-                expected = expected.toDisplayString(),
-                actual = actual.toDisplayString()
+                message = "$label mismatch: ${actual.formatAmount()} != ${expected.formatAmount()}",
+                expected = expected.formatAmount(),
+                actual = actual.formatAmount()
             )
         }
     }

@@ -1,6 +1,7 @@
 package tech.dokus.features.ai.validation
 
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.model.FinancialLineItemDto
 import kotlin.test.Test
 import kotlin.test.assertTrue
@@ -11,7 +12,7 @@ class LineItemsValidatorTest {
     fun `missing line items required yields warning`() {
         val checks = LineItemsValidator.verify(
             lineItems = emptyList(),
-            subtotal = Money(10000),
+            subtotal = Money(10000, Currency.Eur),
             required = true
         )
 
@@ -30,7 +31,7 @@ class LineItemsValidatorTest {
         )
         val checks = LineItemsValidator.verify(
             lineItems = items,
-            subtotal = Money(10000),
+            subtotal = Money(10000, Currency.Eur),
             required = true
         )
 
@@ -46,7 +47,7 @@ class LineItemsValidatorTest {
         )
         val checks = LineItemsValidator.verify(
             lineItems = items,
-            subtotal = Money(10000),
+            subtotal = Money(10000, Currency.Eur),
             required = true
         )
 

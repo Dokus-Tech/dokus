@@ -2,6 +2,7 @@ package tech.dokus.features.cashflow.presentation.detail.models
 
 import androidx.compose.runtime.Immutable
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentType
 
@@ -85,7 +86,7 @@ sealed interface DocumentUiData {
             excludedCount = excluded
             duplicateCount = duplicates
             hasDuplicates = duplicates > 0
-            netAmountDisplay = Money(netMinor).toDisplayString()
+            netAmountDisplay = Money(netMinor, Currency.Eur).formatAmount()
         }
     }
 

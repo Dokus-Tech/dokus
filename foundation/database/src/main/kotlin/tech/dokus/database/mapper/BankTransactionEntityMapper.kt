@@ -26,6 +26,7 @@ fun BankTransactionEntity.Companion.from(row: ResultRow): BankTransactionEntity 
         json.decodeFromString<List<String>>(it)
     } ?: emptyList()
 
+    val currency = row[BankTransactionsTable.currency]
     return BankTransactionEntity(
         id = BankTransactionId.parse(row[BankTransactionsTable.id].value.toString()),
         tenantId = TenantId.parse(row[BankTransactionsTable.tenantId].toString()),
@@ -36,8 +37,8 @@ fun BankTransactionEntity.Companion.from(row: ResultRow): BankTransactionEntity 
         source = row[BankTransactionsTable.txSource],
         transactionDate = row[BankTransactionsTable.transactionDate],
         valueDate = row[BankTransactionsTable.valueDate],
-        signedAmount = Money.fromDbDecimal(row[BankTransactionsTable.signedAmount]),
-        currency = row[BankTransactionsTable.currency],
+        signedAmount = Money.fromDbDecimal(row[BankTransactionsTable.signedAmount], currency),
+        currency = currency,
         counterpartyName = row[BankTransactionsTable.counterpartyName],
         counterpartyIban = Iban.from(row[BankTransactionsTable.counterpartyIban]),
         counterpartyBic = row[BankTransactionsTable.counterpartyBic]?.let { Bic(it) },

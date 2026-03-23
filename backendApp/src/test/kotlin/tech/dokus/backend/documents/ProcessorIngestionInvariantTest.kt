@@ -108,9 +108,9 @@ class ProcessorIngestionInvariantTest {
             issueDate = LocalDate(2024, 1, 1),
             dueDate = LocalDate(2024, 2, 1),
             currency = Currency.Eur,
-            subtotalAmount = Money.from("100.00"),
-            vatAmount = Money.from("21.00"),
-            totalAmount = Money.from("121.00")
+            subtotalAmount = Money.from("100.00", Currency.Eur),
+            vatAmount = Money.from("21.00", Currency.Eur),
+            totalAmount = Money.from("121.00", Currency.Eur)
         )
 
         val marked = processorIngestionRepository.markAsSucceeded(

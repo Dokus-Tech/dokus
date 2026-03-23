@@ -116,8 +116,10 @@ internal fun Route.bankingRoutes() {
 
             val transaction = bankingService.getTransaction(tenantId, transactionId)
                 .getOrElse { error ->
-                    throw (error as? DokusException
-                        ?: DokusException.InternalError("Failed to get transaction: ${error.message}"))
+                    throw (
+                        error as? DokusException
+                            ?: DokusException.InternalError("Failed to get transaction: ${error.message}")
+                        )
                 }
             call.respond(HttpStatusCode.OK, transaction)
         }
@@ -130,8 +132,10 @@ internal fun Route.bankingRoutes() {
 
             val updated = bankingService.linkTransaction(tenantId, transactionId, request.cashflowEntryId)
                 .getOrElse { error ->
-                    throw (error as? DokusException
-                        ?: DokusException.InternalError("Failed to link transaction: ${error.message}"))
+                    throw (
+                        error as? DokusException
+                            ?: DokusException.InternalError("Failed to link transaction: ${error.message}")
+                        )
                 }
             call.respond(HttpStatusCode.OK, updated)
         }
@@ -148,9 +152,11 @@ internal fun Route.bankingRoutes() {
                 reason = request.reason,
                 ignoredBy = dokusPrincipal.userId.value.toString(),
             ).getOrElse { error ->
-                    throw (error as? DokusException
-                        ?: DokusException.InternalError("Failed to ignore transaction: ${error.message}"))
-                }
+                throw (
+                    error as? DokusException
+                        ?: DokusException.InternalError("Failed to ignore transaction: ${error.message}")
+                    )
+            }
             call.respond(HttpStatusCode.OK, updated)
         }
 
@@ -161,8 +167,10 @@ internal fun Route.bankingRoutes() {
 
             val updated = bankingService.confirmSuggestedMatch(tenantId, transactionId)
                 .getOrElse { error ->
-                    throw (error as? DokusException
-                        ?: DokusException.InternalError("Failed to confirm match: ${error.message}"))
+                    throw (
+                        error as? DokusException
+                            ?: DokusException.InternalError("Failed to confirm match: ${error.message}")
+                        )
                 }
             call.respond(HttpStatusCode.OK, updated)
         }
@@ -174,8 +182,10 @@ internal fun Route.bankingRoutes() {
 
             val updated = bankingService.createExpenseFromTransaction(tenantId, transactionId)
                 .getOrElse { error ->
-                    throw (error as? DokusException
-                        ?: DokusException.InternalError("Failed to create expense: ${error.message}"))
+                    throw (
+                        error as? DokusException
+                            ?: DokusException.InternalError("Failed to create expense: ${error.message}")
+                        )
                 }
             call.respond(HttpStatusCode.OK, updated)
         }
@@ -190,8 +200,10 @@ internal fun Route.bankingRoutes() {
                 transactionId = transactionId,
                 rejectedBy = dokusPrincipal.userId.value.toJavaUuid(),
             ).getOrElse { error ->
-                throw (error as? DokusException
-                    ?: DokusException.InternalError("Failed to reject match: ${error.message}"))
+                throw (
+                    error as? DokusException
+                        ?: DokusException.InternalError("Failed to reject match: ${error.message}")
+                    )
             }
             call.respond(HttpStatusCode.OK, updated)
         }
@@ -205,8 +217,10 @@ internal fun Route.bankingRoutes() {
                 tenantId = tenantId,
                 transactionId = transactionId,
             ).getOrElse { error ->
-                throw (error as? DokusException
-                    ?: DokusException.InternalError("Failed to undo match: ${error.message}"))
+                throw (
+                    error as? DokusException
+                        ?: DokusException.InternalError("Failed to undo match: ${error.message}")
+                    )
             }
             call.respond(HttpStatusCode.OK, updated)
         }
@@ -224,8 +238,10 @@ internal fun Route.bankingRoutes() {
                 counterpartTransactionId = request.counterpartTransactionId,
                 destinationAccountId = request.destinationAccountId,
             ).getOrElse { error ->
-                throw (error as? DokusException
-                    ?: DokusException.InternalError("Failed to mark transfer: ${error.message}"))
+                throw (
+                    error as? DokusException
+                        ?: DokusException.InternalError("Failed to mark transfer: ${error.message}")
+                    )
             }
             call.respond(HttpStatusCode.OK, updated)
         }
@@ -239,8 +255,10 @@ internal fun Route.bankingRoutes() {
                 tenantId = tenantId,
                 transactionId = transactionId,
             ).getOrElse { error ->
-                throw (error as? DokusException
-                    ?: DokusException.InternalError("Failed to undo transfer: ${error.message}"))
+                throw (
+                    error as? DokusException
+                        ?: DokusException.InternalError("Failed to undo transfer: ${error.message}")
+                    )
             }
             call.respond(HttpStatusCode.OK, updated)
         }

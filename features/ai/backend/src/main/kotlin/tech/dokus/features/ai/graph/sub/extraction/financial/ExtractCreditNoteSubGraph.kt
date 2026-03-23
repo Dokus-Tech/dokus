@@ -144,16 +144,17 @@ private class CreditNoteExtractionFinishTool :
         description = "Submit extracted credit note fields from the document. Only include values you can see.",
     ) {
     override suspend fun execute(args: CreditNoteExtractionToolInput): FinancialExtractionResult.CreditNote {
+        val currency = Currency.from(args.currency)
         return FinancialExtractionResult.CreditNote(
             CreditNoteExtractionResult(
                 creditNoteNumber = args.creditNoteNumber,
                 issueDate = args.issueDate,
-                currency = Currency.from(args.currency),
-                subtotalAmount = Money.from(args.subtotalAmount),
-                vatAmount = Money.from(args.vatAmount),
-                totalAmount = Money.from(args.totalAmount),
-                lineItems = args.lineItems.orEmpty().mapNotNull { it.toDomain() },
-                vatBreakdown = args.vatBreakdown.orEmpty().mapNotNull { it.toDomain() },
+                currency = currency,
+                subtotalAmount = Money.from(args.subtotalAmount, currency),
+                vatAmount = Money.from(args.vatAmount, currency),
+                totalAmount = Money.from(args.totalAmount, currency),
+                lineItems = args.lineItems.orEmpty().mapNotNull { it.toDomain(currency) },
+                vatBreakdown = args.vatBreakdown.orEmpty().mapNotNull { it.toDomain(currency) },
                 sellerName = args.sellerName,
                 sellerVat = VatNumber.from(args.sellerVat),
                 buyerName = args.buyerName,

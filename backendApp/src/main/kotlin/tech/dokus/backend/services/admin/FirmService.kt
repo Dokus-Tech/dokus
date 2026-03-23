@@ -2,13 +2,13 @@ package tech.dokus.backend.services.admin
 
 import tech.dokus.database.repository.auth.FirmRepository
 import tech.dokus.database.repository.auth.TenantRepository
+import tech.dokus.domain.DisplayName
 import tech.dokus.domain.ids.FirmId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Firm
 import tech.dokus.domain.model.Tenant
-import tech.dokus.domain.DisplayName
-import tech.dokus.domain.ids.VatNumber
 
 /**
  * Service layer for firm management operations.

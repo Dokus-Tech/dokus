@@ -164,7 +164,9 @@ internal class DocumentProcessingWorker(
                 }
                 logger.info(
                     "Recovered {} stale ingestion run(s): {} re-queued for retry, {} marked as Failed",
-                    recoveredRuns.size, requeued, failed
+                    recoveredRuns.size,
+                    requeued,
+                    failed
                 )
             }
         }.onFailure { e ->
@@ -213,7 +215,7 @@ internal class DocumentProcessingWorker(
                         if (!isRunning.get()) throw e
                         logger.error(
                             "Unexpected cancellation while processing ingestion run ${ingestion.runId} " +
-                                    "for document ${ingestion.documentId}",
+                                "for document ${ingestion.documentId}",
                             e
                         )
                         handleFailure(
@@ -228,7 +230,7 @@ internal class DocumentProcessingWorker(
                     } catch (e: Exception) {
                         logger.error(
                             "Failed to process ingestion run ${ingestion.runId} " +
-                                    "for document ${ingestion.documentId}",
+                                "for document ${ingestion.documentId}",
                             e
                         )
                         val providerFailure = isProviderFailure(e)
@@ -336,7 +338,11 @@ internal class DocumentProcessingWorker(
                     if (scheduled) {
                         logger.info(
                             "Scheduled retry for run {} (attempt {}/{}, backoff={}, next at {})",
-                            runId, nextAttemptCount, config.maxAttempts, backoff, nextAttemptAt
+                            runId,
+                            nextAttemptCount,
+                            config.maxAttempts,
+                            backoff,
+                            nextAttemptAt
                         )
                         // No SSE — document stays "in-flight" from the user's perspective
                     } else {
@@ -351,7 +357,9 @@ internal class DocumentProcessingWorker(
                     if (attemptResult.isRetryable) {
                         logger.warn(
                             "Run {} exhausted retries ({}/{}), marking as terminal failure",
-                            runId, nextAttemptCount, config.maxAttempts
+                            runId,
+                            nextAttemptCount,
+                            config.maxAttempts
                         )
                     }
                     ingestionRepository.markAsFailed(runId.toString(), message)
@@ -423,7 +431,10 @@ internal class DocumentProcessingWorker(
 
         logger.info(
             "Processing ingestion run: {} for document: {} (attempt {}/{})",
-            runId, documentId, ingestion.attemptCount + 1, config.maxAttempts
+            runId,
+            documentId,
+            ingestion.attemptCount + 1,
+            config.maxAttempts
         )
 
         try {

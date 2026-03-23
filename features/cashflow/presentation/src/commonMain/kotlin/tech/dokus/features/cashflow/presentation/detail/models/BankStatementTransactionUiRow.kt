@@ -8,6 +8,7 @@ data class BankStatementTransactionUiRow(
     val date: String,
     val description: String,
     val counterpartyName: String?,
+    val counterpartyIban: String?,
     val communication: String?,
     val displayAmount: String,
     val amountMinor: Long,

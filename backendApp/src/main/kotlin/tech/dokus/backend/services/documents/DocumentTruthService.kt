@@ -8,35 +8,34 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import tech.dokus.backend.mappers.from
+import tech.dokus.database.entity.DocumentMatchReviewEntity
+import tech.dokus.database.entity.DocumentSourceEntity
 import tech.dokus.database.repository.cashflow.DocumentBlobCreatePayload
-import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentBlobRepository
+import tech.dokus.database.repository.cashflow.DocumentCreatePayload
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentMatchReviewRepository
-import tech.dokus.database.entity.DocumentMatchReviewEntity
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.database.repository.cashflow.DocumentSourceRepository
 import tech.dokus.database.repository.cashflow.selectPreferredSource
-import tech.dokus.database.entity.DocumentSourceEntity
 import tech.dokus.database.repository.drafts.DraftRepository
-import tech.dokus.backend.mappers.from
-import tech.dokus.domain.model.from
 import tech.dokus.database.tables.documents.DocumentBlobsTable
 import tech.dokus.database.tables.documents.DocumentIngestionRunsTable
 import tech.dokus.database.tables.documents.DocumentSourcesTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.DocumentDirection
-import tech.dokus.domain.enums.IntakeOutcome
-import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
-import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentSourceStatus
-import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
+import tech.dokus.domain.enums.IntakeOutcome
+import tech.dokus.domain.enums.ReviewReason
+import tech.dokus.domain.enums.SourceMatchKind
+import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.DocumentMatchReviewId
 import tech.dokus.domain.ids.DocumentSourceId
@@ -60,8 +59,10 @@ import tech.dokus.domain.model.DepreciationScheduleDraftData
 import tech.dokus.domain.model.DimonaDraftData
 import tech.dokus.domain.model.DividendDraftData
 import tech.dokus.domain.model.DocumentDraftData
+import tech.dokus.domain.model.DocumentDto
 import tech.dokus.domain.model.DocumentIntakeOutcomeDto
 import tech.dokus.domain.model.DocumentMatchResolutionDecision
+import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.EmploymentContractDraftData
 import tech.dokus.domain.model.ExpenseClaimDraftData
 import tech.dokus.domain.model.FineDraftData
@@ -100,8 +101,7 @@ import tech.dokus.domain.model.VatBreakdownEntryDto
 import tech.dokus.domain.model.VatListingDraftData
 import tech.dokus.domain.model.VatReturnDraftData
 import tech.dokus.domain.model.WithholdingTaxDraftData
-import tech.dokus.domain.model.DocumentDto
-import tech.dokus.domain.model.DocumentSourceDto
+import tech.dokus.domain.model.from
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.domain.utils.json
 import tech.dokus.foundation.backend.storage.DocumentStorageService
@@ -139,7 +139,6 @@ sealed interface IntakeResolution {
             override val reviewId: DocumentMatchReviewId,
         ) : NeedsReview
     }
-
 }
 
 data class DocumentIntakeServiceResult(
@@ -430,7 +429,11 @@ class DocumentTruthService(
             if (identityMatchDocumentId != null) {
                 val existingDraftSummary = documentRepository.getDraftByDocumentId(identityMatchDocumentId, tenantId)
                 val existingDraftData = existingDraftSummary?.let {
-                    draftRepository.getDraftAsDocDto(tenantId, identityMatchDocumentId, it.documentType)?.let { docDto -> DocumentDraftData.from(docDto) }
+                    draftRepository.getDraftAsDocDto(
+                        tenantId,
+                        identityMatchDocumentId,
+                        it.documentType
+                    )?.let { docDto -> DocumentDraftData.from(docDto) }
                 }
                 val hasMaterialConflict = existingDraftData?.let { hasMaterialConflict(draftData, it) } ?: false
                 return if (hasMaterialConflict) {
@@ -472,7 +475,11 @@ class DocumentTruthService(
                 if (bestFuzzy != null) {
                     val fuzzyDraftSummary = documentRepository.getDraftByDocumentId(bestFuzzy.documentId, tenantId)
                     val existingDraftData = fuzzyDraftSummary?.let {
-                        draftRepository.getDraftAsDocDto(tenantId, bestFuzzy.documentId, it.documentType)?.let { docDto -> DocumentDraftData.from(docDto) }
+                        draftRepository.getDraftAsDocDto(
+                            tenantId,
+                            bestFuzzy.documentId,
+                            it.documentType
+                        )?.let { docDto -> DocumentDraftData.from(docDto) }
                     }
                     val fuzzyAssessment = buildFuzzyAssessment(
                         incoming = draftData,

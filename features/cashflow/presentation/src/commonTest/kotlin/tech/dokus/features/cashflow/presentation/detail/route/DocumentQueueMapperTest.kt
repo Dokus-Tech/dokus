@@ -3,6 +3,7 @@ package tech.dokus.features.cashflow.presentation.detail.route
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
@@ -120,15 +121,15 @@ class DocumentQueueMapperTest {
         val tenantId = TenantId.parse("44e8ed5c-020a-4bbb-9439-ac85899c5589")
         val documentId = DocumentId.parse("e72f69a8-6913-4d8f-98e7-224db7f4133f")
         val now = LocalDateTime(2026, 2, 11, 0, 0, 0)
-        val total = Money.from("121.00")!!
+        val total = Money.from("121.00", Currency.Eur)!!
 
         val draftData = InvoiceDraftData(
             direction = DocumentDirection.Outbound,
             invoiceNumber = "INV-2026-001",
             issueDate = LocalDate(2026, 1, 1),
             dueDate = dueDate,
-            subtotalAmount = Money.from("100.00")!!,
-            vatAmount = Money.from("21.00")!!,
+            subtotalAmount = Money.from("100.00", Currency.Eur)!!,
+            vatAmount = Money.from("21.00", Currency.Eur)!!,
             totalAmount = total,
         )
 
@@ -169,10 +170,10 @@ class DocumentQueueMapperTest {
                 invoiceNumber = "INV-2026-001",
                 issueDate = LocalDate(2026, 1, 1),
                 dueDate = dueDate,
-                subtotalAmount = Money.from("100.00")!!,
-                vatAmount = Money.from("21.00")!!,
+                subtotalAmount = Money.from("100.00", Currency.Eur)!!,
+                vatAmount = Money.from("21.00", Currency.Eur)!!,
                 totalAmount = total,
-                paidAmount = if (paid) total else Money.ZERO,
+                paidAmount = if (paid) total else Money.zero(Currency.Eur),
                 status = when {
                     paid -> InvoiceStatus.Paid
                     dueDate < LocalDate(2026, 2, 11) -> InvoiceStatus.Overdue

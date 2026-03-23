@@ -7,6 +7,7 @@ import pro.respawn.flowmvi.api.MVIIntent
 import pro.respawn.flowmvi.api.MVIState
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowSourceType
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.DocumentId
@@ -73,9 +74,9 @@ data class CashflowSummary(
     companion object {
         val EMPTY = CashflowSummary(
             periodLabel = "",
-            netAmount = Money.ZERO,
-            totalIn = Money.ZERO,
-            totalOut = Money.ZERO
+            netAmount = Money.zero(Currency.Eur),
+            totalIn = Money.zero(Currency.Eur),
+            totalOut = Money.zero(Currency.Eur)
         )
     }
 }

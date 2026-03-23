@@ -422,6 +422,7 @@ private fun CompressedStatusLine(
     }
 
     val canUnconfirm = !isAccountantReadOnly && state.isDocumentConfirmed && !state.isConfirming
+    val showPaymentStatus = state.uiData !is DocumentUiData.BankStatement
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -439,18 +440,20 @@ private fun CompressedStatusLine(
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface,
         )
-        Text(
-            text = "\u00b7",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.textMuted,
-        )
-        StatusDot(type = state.financialStatus.dotType, size = 6.dp)
-        Text(
-            text = detailText,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = statusColor,
-        )
+        if (showPaymentStatus) {
+            Text(
+                text = "\u00b7",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.textMuted,
+            )
+            StatusDot(type = state.financialStatus.dotType, size = 6.dp)
+            Text(
+                text = detailText,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = statusColor,
+            )
+        }
     }
 }
 

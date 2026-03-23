@@ -18,11 +18,10 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.contact.CounterpartyInfo
-import tech.dokus.domain.model.contact.isLinked
 import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.InvoiceDraftData
 import tech.dokus.domain.model.InvoiceItemDto
+import tech.dokus.domain.model.contact.isLinked
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.util.UUID
@@ -53,8 +52,12 @@ class InvoiceConfirmationService(
 
         val counterparty = draft.counterparty
         val contactId = contactId
-            ?: if (counterparty.isLinked()) counterparty.contactId else null
-            ?: throw DokusException.BadRequest("Invoice requires a linked contact")
+            ?: if (counterparty.isLinked()) {
+                counterparty.contactId
+            } else {
+                null
+                    ?: throw DokusException.BadRequest("Invoice requires a linked contact")
+            }
 
         val items = buildInvoiceItems(draftData)
         val today = Clock.System.now().toLocalDateTime(TimeZone.UTC).date
@@ -128,14 +131,15 @@ class InvoiceConfirmationService(
     }
 
     private fun buildInvoiceItems(draftData: InvoiceDraftData): List<InvoiceItemDto> {
+        val currency = draftData.currency
         if (draftData.lineItems.isNotEmpty()) {
             return draftData.lineItems.mapIndexed { index, item ->
                 val quantity = item.quantity?.takeIf { it > 0 } ?: 1L
-                val unitPrice = item.unitPrice?.let { Money(it) }
-                    ?: item.netAmount?.let { net -> Money(net / quantity) }
-                val lineTotal = item.netAmount?.let { Money(it) }
-                    ?: unitPrice?.let { Money(it.minor * quantity) }
-                    ?: Money.ZERO
+                val unitPrice = item.unitPrice?.let { Money(it, currency) }
+                    ?: item.netAmount?.let { net -> Money(net / quantity, currency) }
+                val lineTotal = item.netAmount?.let { Money(it, currency) }
+                    ?: unitPrice?.let { Money(it.minor * quantity, currency) }
+                    ?: Money.zero(currency)
                 val vatRate = item.vatRate?.let { VatRate(it) } ?: VatRate.ZERO
                 val vatAmount = vatRate.applyTo(lineTotal)
 
@@ -151,8 +155,8 @@ class InvoiceConfirmationService(
             }
         }
 
-        val base = draftData.subtotalAmount ?: draftData.totalAmount ?: Money.ZERO
-        val vat = draftData.vatAmount ?: Money.ZERO
+        val base = draftData.subtotalAmount ?: draftData.totalAmount ?: Money.zero(currency)
+        val vat = draftData.vatAmount ?: Money.zero(currency)
         val vatRate = if (!base.isZero) {
             VatRate(((vat.minor * 10000L) / base.minor).toInt())
         } else {

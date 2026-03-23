@@ -4,6 +4,7 @@ import kotlinx.datetime.LocalDate
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVParser
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.Iban
 import tech.dokus.features.ai.graph.sub.extraction.financial.BankStatementExtractionResult
 import tech.dokus.features.ai.graph.sub.extraction.financial.BankStatementTransactionExtractionRow
@@ -148,7 +149,8 @@ object CsvBankStatementParser {
             }
             .trim()
         if (cleaned.isBlank()) return null
-        return Money.from(cleaned)
+        // Bank statements default to EUR (Belgian context)
+        return Money.from(cleaned, Currency.Eur)
     }
 
     private fun parseDate(raw: String, formatter: DateTimeFormatter?): LocalDate? {

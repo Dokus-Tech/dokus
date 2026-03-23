@@ -8,7 +8,6 @@ import tech.dokus.domain.model.SearchPreset
 import tech.dokus.domain.model.SearchResultEntityType
 import tech.dokus.domain.model.SearchSignalEventRequest
 import tech.dokus.domain.model.SearchSignalEventType
-import tech.dokus.domain.model.SearchCountsDto
 import tech.dokus.domain.model.UnifiedSearchResponse
 import tech.dokus.domain.model.UnifiedSearchScope
 import tech.dokus.foundation.backend.utils.loggerFor

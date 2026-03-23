@@ -7,11 +7,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Scaffold
@@ -19,10 +18,21 @@ import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
+import kotlinx.datetime.LocalDateTime
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.profile_settings_title
+import tech.dokus.domain.Email
+import tech.dokus.domain.Name
+import tech.dokus.domain.asbtractions.RetryHandler
 import tech.dokus.domain.config.ServerConfig
+import tech.dokus.domain.exceptions.DokusException
+import tech.dokus.domain.ids.UserId
+import tech.dokus.domain.model.User
+import tech.dokus.features.auth.mvi.AvatarState
+import tech.dokus.features.auth.mvi.MySessionsState
 import tech.dokus.features.auth.mvi.ProfileSettingsIntent
 import tech.dokus.features.auth.mvi.ProfileSettingsState
 import tech.dokus.features.auth.presentation.auth.components.AccountCard
@@ -30,36 +40,20 @@ import tech.dokus.features.auth.presentation.auth.components.DangerZoneCard
 import tech.dokus.features.auth.presentation.auth.components.LogOutCard
 import tech.dokus.features.auth.presentation.auth.components.ProfileEditingSection
 import tech.dokus.features.auth.presentation.auth.components.ProfileHero
-import tech.dokus.features.auth.presentation.auth.components.ProfileSettingsSkeleton
 import tech.dokus.features.auth.presentation.auth.components.ProfileSavingSection
 import tech.dokus.features.auth.presentation.auth.components.SecurityCard
 import tech.dokus.features.auth.presentation.auth.components.ServerCard
 import tech.dokus.features.auth.presentation.auth.components.VersionFooter
 import tech.dokus.foundation.app.picker.rememberImagePicker
-import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.state.DokusState
-import tech.dokus.foundation.app.state.isError
-import tech.dokus.foundation.app.state.isLoading
 import tech.dokus.foundation.app.state.isSuccess
 import tech.dokus.foundation.aura.components.common.DokusErrorBanner
 import tech.dokus.foundation.aura.components.common.ErrorOverlay
 import tech.dokus.foundation.aura.components.common.PTopAppBar
-import tech.dokus.foundation.aura.constrains.Constraints
 import tech.dokus.foundation.aura.local.LocalScreenSize
 import tech.dokus.foundation.aura.tooling.PreviewParameters
 import tech.dokus.foundation.aura.tooling.PreviewParametersProvider
 import tech.dokus.foundation.aura.tooling.TestWrapper
-import tech.dokus.domain.Email
-import tech.dokus.features.auth.mvi.AvatarState
-import tech.dokus.domain.Name
-import tech.dokus.domain.asbtractions.RetryHandler
-import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.model.User
-import tech.dokus.features.auth.mvi.MySessionsState
-import androidx.compose.runtime.remember
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import kotlinx.datetime.LocalDateTime
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -193,7 +187,8 @@ fun ProfileSettingsContent(
             modifier = Modifier
                 .widthIn(max = MaxContentWidth)
                 .padding(horizontal = ContentPaddingH)
-                .padding(top = 8.dp),
+                .padding(top = 16.dp)
+                .align(Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(SectionSpacing),
         ) {
             actionError?.let { error ->
@@ -209,66 +204,80 @@ fun ProfileSettingsContent(
                 exception = if (state.user is DokusState.Error) state.user.exception else null,
                 retryHandler = if (state.user is DokusState.Error) state.user.retryHandler else null,
             ) {
-            when {
-                state.isSaving && state.user.isSuccess() -> {
-                    ProfileSavingSection(
-                        email = state.user.data.email.value,
-                        editFirstName = state.editFirstName,
-                        editLastName = state.editLastName,
-                    )
-                }
+                Column(verticalArrangement = Arrangement.spacedBy(SectionSpacing)) {
+                    when {
+                        state.isSaving && state.user.isSuccess() -> {
+                            ProfileSavingSection(
+                                email = state.user.data.email.value,
+                                editFirstName = state.editFirstName,
+                                editLastName = state.editLastName,
+                            )
+                        }
 
-                state.isEditing && state.user.isSuccess() -> {
-                    ProfileEditingSection(
-                        email = state.user.data.email.value,
-                        editFirstName = state.editFirstName,
-                        editLastName = state.editLastName,
-                        canSave = state.canSave,
-                        onFirstNameChange = { onIntent(ProfileSettingsIntent.UpdateFirstName(it)) },
-                        onLastNameChange = { onIntent(ProfileSettingsIntent.UpdateLastName(it)) },
-                        onSave = { onIntent(ProfileSettingsIntent.SaveClicked) },
-                        onCancel = { onIntent(ProfileSettingsIntent.CancelEditing) },
-                    )
-                }
+                        state.isEditing && state.user.isSuccess() -> {
+                            ProfileEditingSection(
+                                email = state.user.data.email.value,
+                                editFirstName = state.editFirstName,
+                                editLastName = state.editLastName,
+                                canSave = state.canSave,
+                                onFirstNameChange = {
+                                    onIntent(
+                                        ProfileSettingsIntent.UpdateFirstName(
+                                            it
+                                        )
+                                    )
+                                },
+                                onLastNameChange = {
+                                    onIntent(
+                                        ProfileSettingsIntent.UpdateLastName(
+                                            it
+                                        )
+                                    )
+                                },
+                                onSave = { onIntent(ProfileSettingsIntent.SaveClicked) },
+                                onCancel = { onIntent(ProfileSettingsIntent.CancelEditing) },
+                            )
+                        }
 
-                state.user.isSuccess() -> {
-                    val user = state.user.data
-                    ProfileHero(
-                        user = user,
-                        avatarState = state.avatarState,
-                        onUploadAvatar = { avatarPicker.launch() },
-                        onResetAvatarState = { onIntent(ProfileSettingsIntent.ResetAvatarState) },
-                    )
-                    AccountCard(
-                        user = user,
-                        isResendingVerification = state.isResendingVerification,
-                        onResendVerification = onResendVerification,
-                        onEditClick = { onIntent(ProfileSettingsIntent.StartEditing) },
-                    )
-                }
+                        state.user.isSuccess() -> {
+                            val user = state.user.data
+                            ProfileHero(
+                                user = user,
+                                avatarState = state.avatarState,
+                                onUploadAvatar = { avatarPicker.launch() },
+                                onResetAvatarState = { onIntent(ProfileSettingsIntent.ResetAvatarState) },
+                            )
+                            AccountCard(
+                                user = user,
+                                isResendingVerification = state.isResendingVerification,
+                                onResendVerification = onResendVerification,
+                                onEditClick = { onIntent(ProfileSettingsIntent.StartEditing) },
+                            )
+                        }
 
-                else -> {
-                    val now = LocalDateTime(2026, 1, 1, 0, 0)
-                    val emptyUser = User(
-                        id = UserId.generate(),
-                        email = Email(""),
-                        createdAt = now,
-                        updatedAt = now,
-                    )
-                    ProfileHero(
-                        user = emptyUser,
-                        avatarState = AvatarState.Idle,
-                        onUploadAvatar = {},
-                        onResetAvatarState = {},
-                    )
-                    AccountCard(
-                        user = emptyUser,
-                        isResendingVerification = false,
-                        onResendVerification = {},
-                        onEditClick = {},
-                    )
+                        else -> {
+                            val now = LocalDateTime(2026, 1, 1, 0, 0)
+                            val emptyUser = User(
+                                id = UserId.generate(),
+                                email = Email(""),
+                                createdAt = now,
+                                updatedAt = now,
+                            )
+                            ProfileHero(
+                                user = emptyUser,
+                                avatarState = AvatarState.Idle,
+                                onUploadAvatar = {},
+                                onResetAvatarState = {},
+                            )
+                            AccountCard(
+                                user = emptyUser,
+                                isResendingVerification = false,
+                                onResendVerification = {},
+                                onEditClick = {},
+                            )
+                        }
+                    }
                 }
-            }
             }
 
             // Independent sections -- always visible regardless of state

@@ -251,7 +251,11 @@ internal class BusinessProfileEnrichmentJobProcessor(
         val profile = businessProfileService.getProfileRecord(job.tenantId, job.subjectType, job.subjectId)
         val websiteUrl = profile?.websiteUrl
         if (websiteUrl.isNullOrBlank()) {
-            logger.info("No website URL for website-changed enrichment, subjectType={}, subjectId={}", job.subjectType, job.subjectId)
+            logger.info(
+                "No website URL for website-changed enrichment, subjectType={}, subjectId={}",
+                job.subjectType,
+                job.subjectId
+            )
             jobRepository.markCompleted(job.id)
             return
         }
@@ -281,7 +285,12 @@ internal class BusinessProfileEnrichmentJobProcessor(
             lastErrorMessage = null,
         )
         jobRepository.markCompleted(job.id)
-        logger.info("Completed website-changed enrichment for subjectType={}, subjectId={}, website={}", job.subjectType, job.subjectId, websiteUrl)
+        logger.info(
+            "Completed website-changed enrichment for subjectType={}, subjectId={}, website={}",
+            job.subjectType,
+            job.subjectId,
+            websiteUrl
+        )
     }
 
     private suspend fun extractBusinessContent(

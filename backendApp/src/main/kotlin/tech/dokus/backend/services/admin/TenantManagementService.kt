@@ -3,14 +3,14 @@ package tech.dokus.backend.services.admin
 import tech.dokus.database.repository.auth.AddressRepository
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
+import tech.dokus.domain.DisplayName
+import tech.dokus.domain.LegalName
 import tech.dokus.domain.enums.Language
 import tech.dokus.domain.enums.SubscriptionTier
 import tech.dokus.domain.enums.TenantType
 import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
-import tech.dokus.domain.DisplayName
-import tech.dokus.domain.LegalName
 import tech.dokus.domain.ids.VatNumber
 import tech.dokus.domain.model.Address
 import tech.dokus.domain.model.Tenant

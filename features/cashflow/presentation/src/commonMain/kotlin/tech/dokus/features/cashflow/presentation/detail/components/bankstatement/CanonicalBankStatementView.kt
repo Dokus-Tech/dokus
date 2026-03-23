@@ -3,7 +3,6 @@ package tech.dokus.features.cashflow.presentation.detail.components.bankstatemen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -53,6 +52,7 @@ internal fun CanonicalBankStatementView(
                         }
                     },
                     style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             }
             data.accountIban?.let { iban ->

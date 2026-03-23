@@ -140,10 +140,10 @@ class CashflowOverviewService(
             .sumOf { it.totalAmount.minor }
 
         val cashIn = CashInSummary(
-            total = Money(cashInTotal),
-            paid = Money(cashInPaid),
-            pending = Money(cashInPending),
-            overdue = Money(cashInOverdue),
+            total = Money(cashInTotal, Currency.Eur),
+            paid = Money(cashInPaid, Currency.Eur),
+            pending = Money(cashInPending, Currency.Eur),
+            overdue = Money(cashInOverdue, Currency.Eur),
             invoiceCount = invoices.size
         )
 
@@ -172,9 +172,9 @@ class CashflowOverviewService(
         val cashOutPending = inboundInvoicePending
 
         val cashOut = CashOutSummary(
-            total = Money(cashOutTotal),
-            paid = Money(cashOutPaid),
-            pending = Money(cashOutPending),
+            total = Money(cashOutTotal, Currency.Eur),
+            paid = Money(cashOutPaid, Currency.Eur),
+            pending = Money(cashOutPending, Currency.Eur),
             expenseCount = expenses.size,
             inboundInvoiceCount = inboundInvoices.size
         )
@@ -186,7 +186,7 @@ class CashflowOverviewService(
             period = CashflowPeriod(from = effectiveFromDate, to = effectiveToDate),
             cashIn = cashIn,
             cashOut = cashOut,
-            netCashflow = Money(netCashflow),
+            netCashflow = Money(netCashflow, Currency.Eur),
             currency = Currency.Eur
         )
     }.onFailure {
@@ -245,10 +245,10 @@ class CashflowOverviewService(
             .sumOf { it.amountGross.minor }
 
         val cashIn = CashInSummary(
-            total = Money(cashInTotal),
-            paid = Money(cashInPaid),
-            pending = Money(cashInPending),
-            overdue = Money(cashInOverdue),
+            total = Money(cashInTotal, Currency.Eur),
+            paid = Money(cashInPaid, Currency.Eur),
+            pending = Money(cashInPending, Currency.Eur),
+            overdue = Money(cashInOverdue, Currency.Eur),
             invoiceCount = cashInEntries.size
         )
 
@@ -262,9 +262,9 @@ class CashflowOverviewService(
             .sumOf { it.amountGross.minor }
 
         val cashOut = CashOutSummary(
-            total = Money(cashOutTotal),
-            paid = Money(cashOutPaid),
-            pending = Money(cashOutPending),
+            total = Money(cashOutTotal, Currency.Eur),
+            paid = Money(cashOutPaid, Currency.Eur),
+            pending = Money(cashOutPending, Currency.Eur),
             expenseCount = cashOutEntries.count { it.sourceType == tech.dokus.domain.enums.CashflowSourceType.Expense },
             inboundInvoiceCount = cashOutEntries.count { it.sourceType == tech.dokus.domain.enums.CashflowSourceType.Invoice }
         )
@@ -276,7 +276,7 @@ class CashflowOverviewService(
             period = CashflowPeriod(from = fromDate, to = toDate),
             cashIn = cashIn,
             cashOut = cashOut,
-            netCashflow = Money(netCashflow),
+            netCashflow = Money(netCashflow, Currency.Eur),
             currency = Currency.Eur
         )
     }

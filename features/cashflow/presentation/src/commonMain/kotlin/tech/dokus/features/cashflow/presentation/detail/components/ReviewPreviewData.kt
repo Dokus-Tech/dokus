@@ -94,9 +94,9 @@ internal fun previewReviewContentState(
         issueDate = previewIssueDate,
         dueDate = previewDueDate,
         currency = Currency.Eur,
-        subtotalAmount = Money.from("239.67"),
-        vatAmount = Money.from("49.33"),
-        totalAmount = Money.from("289.00"),
+        subtotalAmount = Money.from("239.67", Currency.Eur),
+        vatAmount = Money.from("49.33", Currency.Eur),
+        totalAmount = Money.from("289.00", Currency.Eur),
         lineItems = listOf(
             FinancialLineItemDto(
                 description = "Insurance premium - Q1 2026",
@@ -138,12 +138,12 @@ internal fun previewReviewContentState(
             documentId = documentId,
             direction = CashflowDirection.Out,
             eventDate = previewDueDate,
-            amountGross = Money.from("289.00")!!,
-            amountVat = Money.from("49.33")!!,
+            amountGross = Money.from("289.00", Currency.Eur)!!,
+            amountVat = Money.from("49.33", Currency.Eur)!!,
             remainingAmount = if (status == CashflowEntryStatus.Paid) {
-                Money.from("0.00")!!
+                Money.from("0.00", Currency.Eur)!!
             } else {
-                Money.from("289.00")!!
+                Money.from("289.00", Currency.Eur)!!
             },
             currency = Currency.Eur,
             status = status,
@@ -287,8 +287,8 @@ internal fun previewPaymentSheetState(
     }
 
     return PaymentSheetState(
-        amountText = selectedAmount?.toDisplayString() ?: "289.00",
-        amount = selectedAmount ?: Money.from("289.00"),
+        amountText = selectedAmount?.formatAmount() ?: "289.00",
+        amount = selectedAmount ?: Money.from("289.00", Currency.Eur),
         paidAt = selected?.transactionDate ?: LocalDate(2026, 2, 15),
         note = "Bank transfer",
         suggestedTransaction = selected,
@@ -350,9 +350,9 @@ internal fun previewStateForDocumentType(
             documentId = documentId,
             direction = CashflowDirection.Out,
             eventDate = previewDueDate,
-            amountGross = Money.from("289.00")!!,
-            amountVat = Money.from("49.33")!!,
-            remainingAmount = Money.from("289.00")!!,
+            amountGross = Money.from("289.00", Currency.Eur)!!,
+            amountVat = Money.from("49.33", Currency.Eur)!!,
+            remainingAmount = Money.from("289.00", Currency.Eur)!!,
             currency = Currency.Eur,
             status = CashflowEntryStatus.Open,
             paidAt = null,
@@ -432,9 +432,9 @@ private fun previewDraftData(type: DocumentType): DocumentDraftData = when (type
         issueDate = previewIssueDate,
         dueDate = previewDueDate,
         currency = Currency.Eur,
-        subtotalAmount = Money.from("239.67"),
-        vatAmount = Money.from("49.33"),
-        totalAmount = Money.from("289.00"),
+        subtotalAmount = Money.from("239.67", Currency.Eur),
+        vatAmount = Money.from("49.33", Currency.Eur),
+        totalAmount = Money.from("289.00", Currency.Eur),
         lineItems = listOf(
             FinancialLineItemDto(description = "Insurance premium - Q1 2026", quantity = 1, netAmount = 28900),
         ),
@@ -447,9 +447,9 @@ private fun previewDraftData(type: DocumentType): DocumentDraftData = when (type
         issueDate = previewIssueDate,
         originalInvoiceNumber = "384421507",
         currency = Currency.Eur,
-        subtotalAmount = Money.from("82.64"),
-        vatAmount = Money.from("17.36"),
-        totalAmount = Money.from("100.00"),
+        subtotalAmount = Money.from("82.64", Currency.Eur),
+        vatAmount = Money.from("17.36", Currency.Eur),
+        totalAmount = Money.from("100.00", Currency.Eur),
         lineItems = listOf(
             FinancialLineItemDto(description = "Pricing correction", quantity = 1, netAmount = 10000),
         ),
@@ -459,8 +459,8 @@ private fun previewDraftData(type: DocumentType): DocumentDraftData = when (type
     DocumentType.Receipt -> ReceiptDraftData(
         receiptNumber = "R-2026-0199",
         date = previewIssueDate,
-        totalAmount = Money.from("45.50"),
-        vatAmount = Money.from("7.89"),
+        totalAmount = Money.from("45.50", Currency.Eur),
+        vatAmount = Money.from("7.89", Currency.Eur),
         currency = Currency.Eur,
         notes = "Office supplies",
     )
@@ -468,8 +468,8 @@ private fun previewDraftData(type: DocumentType): DocumentDraftData = when (type
         accountIban = Iban("BE68539007547034"),
         periodStart = previewIssueDate,
         periodEnd = previewDueDate,
-        openingBalance = Money(1452361),
-        closingBalance = Money(1231042),
+        openingBalance = Money(1452361, Currency.Eur),
+        closingBalance = Money(1231042, Currency.Eur),
         institution = PartyDraftDto(name = "KBC Bank NV"),
         transactions = previewBankStatementDraftRows(),
     )
@@ -483,7 +483,7 @@ private fun previewDraftData(type: DocumentType): DocumentDraftData = when (type
 private fun previewBankStatementDraftRows(): List<BankStatementTransactionDraftRowDto> = listOf(
     BankStatementTransactionDraftRowDto(
         transactionDate = LocalDate(2026, 1, 5),
-        signedAmount = Money(-79860),
+        signedAmount = Money(-79860, Currency.Eur),
         counterparty = CounterpartySnapshotDto(name = "SRL Accounting & Tax Solutions", iban = Iban("BE86363206145450")),
         communication = TransactionCommunicationDto.Structured("+++091/0044/28176+++", StructuredCommunication("091004428176")),
         descriptionRaw = "SENDING MONEY TO BE86 3632 0614 5450",
@@ -491,7 +491,7 @@ private fun previewBankStatementDraftRows(): List<BankStatementTransactionDraftR
     ),
     BankStatementTransactionDraftRowDto(
         transactionDate = LocalDate(2026, 1, 13),
-        signedAmount = Money(-28900),
+        signedAmount = Money(-28900, Currency.Eur),
         counterparty = CounterpartySnapshotDto(name = "Coolblue België NV"),
         descriptionRaw = "CREDIT TRANSFER",
         rowConfidence = 1.0,
@@ -500,7 +500,7 @@ private fun previewBankStatementDraftRows(): List<BankStatementTransactionDraftR
     ),
     BankStatementTransactionDraftRowDto(
         transactionDate = LocalDate(2026, 1, 14),
-        signedAmount = Money(-34697),
+        signedAmount = Money(-34697, Currency.Eur),
         counterparty = CounterpartySnapshotDto(name = "Tesla Belgium BVBA", iban = Iban("NL65ADYB2006011162")),
         descriptionRaw = "EUROPEAN DIRECT DEBIT",
         rowConfidence = 1.0,
@@ -509,7 +509,7 @@ private fun previewBankStatementDraftRows(): List<BankStatementTransactionDraftR
     ),
     BankStatementTransactionDraftRowDto(
         transactionDate = LocalDate(2026, 1, 17),
-        signedAmount = Money(1337050),
+        signedAmount = Money(1337050, Currency.Eur),
         counterparty = CounterpartySnapshotDto(name = "MEDIAHUIS TECHNOLOGY PRODUCT STUDIO", iban = Iban("BE39001920126619")),
         communication = TransactionCommunicationDto.FreeForm("IV-051"),
         descriptionRaw = "CREDIT TRANSFER FROM BE39 0019 2012 6619",
@@ -517,7 +517,7 @@ private fun previewBankStatementDraftRows(): List<BankStatementTransactionDraftR
     ),
     BankStatementTransactionDraftRowDto(
         transactionDate = LocalDate(2026, 1, 30),
-        signedAmount = Money(-130612),
+        signedAmount = Money(-130612, Currency.Eur),
         counterparty = CounterpartySnapshotDto(name = "Donckers Schoten NV", iban = Iban("BE85679200363806")),
         descriptionRaw = "SENDING MONEY TO BE85 6792 0036 3806",
         rowConfidence = 1.0,
@@ -526,7 +526,7 @@ private fun previewBankStatementDraftRows(): List<BankStatementTransactionDraftR
     ),
     BankStatementTransactionDraftRowDto(
         transactionDate = LocalDate(2026, 2, 4),
-        signedAmount = Money(-96252),
+        signedAmount = Money(-96252, Currency.Eur),
         counterparty = CounterpartySnapshotDto(name = "KBC Bank NV"),
         communication = TransactionCommunicationDto.FreeForm("Business loan - Feb"),
         descriptionRaw = "PAYMENT LEASING 0001/0001/BE/2600057216",
@@ -534,7 +534,7 @@ private fun previewBankStatementDraftRows(): List<BankStatementTransactionDraftR
     ),
     BankStatementTransactionDraftRowDto(
         transactionDate = LocalDate(2026, 2, 25),
-        signedAmount = Money(-48733),
+        signedAmount = Money(-48733, Currency.Eur),
         counterparty = CounterpartySnapshotDto(name = "Donckers Schoten NV", iban = Iban("BE85679200363806")),
         communication = TransactionCommunicationDto.FreeForm("Fuel, Feb 2026"),
         descriptionRaw = "SENDING MONEY TO BE85 6792 0036 3806",
@@ -548,7 +548,7 @@ internal fun previewImportedTransactions(): List<BankTransactionDto> = listOf(
         tenantId = previewTenantId,
         documentId = previewDocumentId,
         transactionDate = LocalDate(2026, 2, 15),
-        signedAmount = Money.from("-289.00")!!,
+        signedAmount = Money.from("-289.00", Currency.Eur)!!,
         counterparty = CounterpartySnapshotDto(
             name = "KBC Bank NV",
             iban = Iban("BE68539007547034"),
@@ -567,7 +567,7 @@ internal fun previewImportedTransactions(): List<BankTransactionDto> = listOf(
         tenantId = previewTenantId,
         documentId = previewDocumentId,
         transactionDate = LocalDate(2026, 2, 12),
-        signedAmount = Money.from("-289.00")!!,
+        signedAmount = Money.from("-289.00", Currency.Eur)!!,
         counterparty = CounterpartySnapshotDto(name = "KBC Bank NV"),
         descriptionRaw = "Transfer KBC",
         status = BankTransactionStatus.Unmatched,
@@ -579,7 +579,7 @@ internal fun previewImportedTransactions(): List<BankTransactionDto> = listOf(
         tenantId = previewTenantId,
         documentId = previewDocumentId,
         transactionDate = LocalDate(2026, 2, 10),
-        signedAmount = Money.from("-300.00")!!,
+        signedAmount = Money.from("-300.00", Currency.Eur)!!,
         counterparty = CounterpartySnapshotDto(name = "AXA Belgium"),
         descriptionRaw = "AXA insurance transfer",
         status = BankTransactionStatus.Unmatched,

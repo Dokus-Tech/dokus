@@ -5,6 +5,7 @@
 package tech.dokus.domain
 
 import kotlinx.serialization.Serializable
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.exceptions.DokusException
 import kotlin.jvm.JvmInline
 
@@ -25,24 +26,30 @@ private const val BasisPointsPerFull = 10000
 private const val BasisPointsPerFullDouble = 10000.0
 
 /**
- * Money represented in minor units (cents for EUR/USD/GBP).
+ * Money represented in minor units (cents for EUR/USD/GBP) with mandatory currency.
+ *
+ * Currency is never optional, never defaulted. Every monetary value carries its currency.
  *
  * Examples:
- * - €123.45 = Money(12345)
- * - $0.01 = Money(1)
- * - €-50.00 = Money(-5000)
+ * - Money.eur(12345)           → €123.45
+ * - Money.of(1, Currency.Usd)  → $0.01
+ * - Money.eur(-5000)           → €-50.00
  *
- * Using minor units (Long) avoids all floating-point precision issues.
+ * Cross-currency arithmetic is illegal — operators require matching currencies.
+ * Formatting belongs to the presentation layer, not domain.
  */
 @Serializable
-@JvmInline
-value class Money(val minor: Long) : Comparable<Money> {
+data class Money(
+    val minor: Long,
+    val currency: Currency,
+) : Comparable<Money> {
 
     /**
-     * Display string with 2 decimal places.
+     * Numeric-only display string with 2 decimal places.
+     * No currency symbol — formatting belongs to presentation.
      * Examples: "123.45", "-50.00", "0.00"
      */
-    fun toDisplayString(): String {
+    fun formatAmount(): String {
         val isNegative = minor < 0
         val absMinor = if (minor < 0) -minor else minor
         val whole = absMinor / CentsPerUnit
@@ -51,67 +58,93 @@ value class Money(val minor: Long) : Comparable<Money> {
         return "$sign$whole.${cents.toString().padStart(DecimalPlaces, '0')}"
     }
 
-    override fun toString(): String = toDisplayString()
+    /** @deprecated Use [formatAmount] instead. Will be removed. */
+    @Deprecated("Use formatAmount() instead", ReplaceWith("formatAmount()"))
+    fun toDisplayString(): String = formatAmount()
 
-    override fun compareTo(other: Money): Int = minor.compareTo(other.minor)
+    override fun toString(): String = "${currency.dbValue} ${formatAmount()}"
 
-    operator fun plus(other: Money): Money = Money(minor + other.minor)
-    operator fun minus(other: Money): Money = Money(minor - other.minor)
-    operator fun times(quantity: Int): Money = Money(minor * quantity)
-    operator fun times(quantity: Long): Money = Money(minor * quantity)
-    operator fun unaryMinus(): Money = Money(-minor)
+    override fun compareTo(other: Money): Int {
+        require(currency == other.currency) { "Cannot compare ${currency.dbValue} with ${other.currency.dbValue}" }
+        return minor.compareTo(other.minor)
+    }
 
-    /**
-     * Check if this amount is zero.
-     */
+    operator fun plus(other: Money): Money {
+        require(currency == other.currency) { "Cannot add ${currency.dbValue} and ${other.currency.dbValue}" }
+        return Money(minor + other.minor, currency)
+    }
+
+    operator fun minus(other: Money): Money {
+        require(currency == other.currency) { "Cannot subtract ${currency.dbValue} and ${other.currency.dbValue}" }
+        return Money(minor - other.minor, currency)
+    }
+
+    operator fun times(quantity: Int): Money = Money(minor * quantity, currency)
+    operator fun times(quantity: Long): Money = Money(minor * quantity, currency)
+    operator fun unaryMinus(): Money = Money(-minor, currency)
+
     val isZero: Boolean get() = minor == 0L
-
-    /**
-     * Check if this amount is negative.
-     */
     val isNegative: Boolean get() = minor < 0
-
-    /**
-     * Check if this amount is positive (> 0).
-     */
     val isPositive: Boolean get() = minor > 0
 
     /**
      * Convert to Double value in major units.
-     * Example: Money(12345).toDouble() = 123.45
+     * Example: Money.eur(12345).toDouble() = 123.45
      */
     fun toDouble(): Double = minor / CentsPerUnitDouble
 
     companion object {
-        val ZERO = Money(0L)
+        /** Convenience factory for EUR amounts. */
+        fun eur(minor: Long) = Money(minor, Currency.Eur)
+
+        /** Factory with explicit currency. */
+        fun of(minor: Long, currency: Currency) = Money(minor, currency)
+
+        /** Zero amount in the given currency. */
+        fun zero(currency: Currency) = Money(0L, currency)
 
         /**
          * Parse a human-entered money string into [Money].
-         *
-         * Supports:
-         * - "1234.56"
-         * - "1,234.56"
-         * - "1.234,56"
-         * - "1234"
-         * - Optional currency symbols and spaces
+         * Currency must be provided explicitly — symbols in the input are stripped.
          */
-        fun from(value: String?): Money? {
+        fun from(value: String?, currency: Currency): Money? {
             val normalized = normalizeMoneyInput(value) ?: return null
-            return parse(normalized)
+            return parseMinor(normalized)?.let { Money(it, currency) }
         }
 
         /**
          * Parse a display string like "123.45" or "-50.00" into Money.
-         * Returns null if the string is not a valid money format.
-         *
-         * Handles:
-         * - Currency symbols (€$£) - stripped
-         * - Whitespace - stripped
-         * - Comma as decimal separator - converted to dot
-         * - Optional negative sign
+         * Currency symbols in the input are stripped — the explicit [currency] is used.
+         */
+        fun parse(value: String, currency: Currency): Money? =
+            parseMinor(value)?.let { Money(it, currency) }
+
+        /**
+         * Create Money from a Double value in major units.
+         */
+        fun fromDouble(value: Double, currency: Currency): Money {
+            val minor = kotlin.math.round(value * CentsPerUnit).toLong()
+            return Money(minor, currency)
+        }
+
+        /**
+         * Create Money from an Int value (whole units, no cents).
+         */
+        fun fromInt(value: Int, currency: Currency): Money =
+            Money(value.toLong() * CentsPerUnit, currency)
+
+        /**
+         * Parse a string with validation, throwing if invalid.
+         */
+        fun parseOrThrow(value: String, currency: Currency): Money =
+            parse(value, currency) ?: throw DokusException.Validation.InvalidMoney
+
+        /**
+         * Parse the numeric part of a money string, returning minor units.
+         * Strips currency symbols — the caller provides the currency.
          */
         @Suppress("CyclomaticComplexMethod") // Currency parsing inherently requires multiple format checks
-        fun parse(value: String): Money? {
+        private fun parseMinor(value: String): Long? {
             val cleaned = value
                 .replace("€", "")
                 .replace("$", "")
@@ -135,16 +168,14 @@ value class Money(val minor: Long) : Comparable<Money> {
                 val parts = absValue.split(".")
                 when (parts.size) {
                     1 -> {
-                        // No decimal part: "123" -> 12300
                         val whole = parts[0].toLongOrNull() ?: return null
                         val minor = whole * CentsPerUnit
-                        Money(if (isNegative) -minor else minor)
+                        if (isNegative) -minor else minor
                     }
                     2 -> {
-                        // Has decimal part: "123.45" -> 12345
                         val whole = parts[0].toLongOrNull() ?: return null
                         val decimalPart = parts[1]
-                        if (decimalPart.length > DecimalPlaces) return null // Too many decimals
+                        if (decimalPart.length > DecimalPlaces) return null
 
                         val cents = when (decimalPart.length) {
                             NoDecimalDigits -> 0L
@@ -153,38 +184,13 @@ value class Money(val minor: Long) : Comparable<Money> {
                             else -> return null
                         }
                         val minor = whole * CentsPerUnit + cents
-                        Money(if (isNegative) -minor else minor)
+                        if (isNegative) -minor else minor
                     }
-                    else -> null // Multiple decimal points
+                    else -> null
                 }
             } catch (e: NumberFormatException) {
                 null
             }
-        }
-
-        /**
-         * Create Money from a Double value.
-         * Uses rounding to handle floating-point imprecision.
-         *
-         * @param value The amount in major units (e.g., 123.45)
-         */
-        fun fromDouble(value: Double): Money {
-            val minor = kotlin.math.round(value * CentsPerUnit).toLong()
-            return Money(minor)
-        }
-
-        /**
-         * Create Money from an Int value (whole units, no cents).
-         *
-         * @param value The amount in major units (e.g., 123 becomes €123.00)
-         */
-        fun fromInt(value: Int): Money = Money(value.toLong() * CentsPerUnit)
-
-        /**
-         * Parse a string with validation, throwing if invalid.
-         */
-        fun parseOrThrow(value: String): Money {
-            return parse(value) ?: throw DokusException.Validation.InvalidMoney
         }
 
         private fun normalizeMoneyInput(value: String?): String? {
@@ -277,7 +283,7 @@ value class VatRate(val basisPoints: Int) : Comparable<VatRate> {
      */
     fun applyTo(amount: Money): Money {
         val vatMinor = (amount.minor * basisPoints) / BasisPointsPerFull
-        return Money(vatMinor)
+        return Money(vatMinor, amount.currency)
     }
 
     /**
@@ -396,7 +402,7 @@ value class Percentage(val basisPoints: Int) : Comparable<Percentage> {
      */
     fun applyTo(amount: Money): Money {
         val result = (amount.minor * basisPoints) / BasisPointsPerFull
-        return Money(result)
+        return Money(result, amount.currency)
     }
 
     /**

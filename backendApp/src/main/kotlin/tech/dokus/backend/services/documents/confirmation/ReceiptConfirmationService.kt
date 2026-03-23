@@ -99,7 +99,7 @@ class ReceiptConfirmationService(
                 documentId = documentId,
                 expenseDate = date,
                 amountGross = expense.amount,
-                amountVat = expense.vatAmount ?: Money.ZERO,
+                amountVat = expense.vatAmount ?: Money.zero(totalAmount.currency),
                 contactId = contactId
             ).getOrThrow()
         } else {
@@ -109,7 +109,7 @@ class ReceiptConfirmationService(
                 documentId = documentId,
                 expenseDate = date,
                 amountGross = expense.amount,
-                amountVat = expense.vatAmount ?: Money.ZERO,
+                amountVat = expense.vatAmount ?: Money.zero(totalAmount.currency),
                 contactId = contactId
             ).getOrThrow()
         }

@@ -10,12 +10,12 @@ import tech.dokus.domain.enums.DocumentType
 // FinancialLineItemDto → DocLineItem
 // =============================================================================
 
-fun DocLineItem.Companion.from(dto: FinancialLineItemDto): DocLineItem = DocLineItem(
+fun DocLineItem.Companion.from(dto: FinancialLineItemDto, currency: Currency): DocLineItem = DocLineItem(
     description = dto.description,
     quantity = dto.quantity?.let { Quantity(it.toDouble()) },
-    unitPrice = dto.unitPrice?.let { Money(it) },
+    unitPrice = dto.unitPrice?.let { Money(it, currency) },
     vatRate = dto.vatRate?.let { tech.dokus.domain.VatRate(it) },
-    netAmount = dto.netAmount?.let { Money(it) },
+    netAmount = dto.netAmount?.let { Money(it, currency) },
 )
 
 fun DocLineItem.Companion.from(dto: InvoiceItemDto): DocLineItem = DocLineItem(
@@ -77,7 +77,7 @@ fun DocDto.Companion.from(data: DocumentDraftData): DocDto = when (data) {
         subtotalAmount = data.subtotalAmount,
         vatAmount = data.vatAmount,
         totalAmount = data.totalAmount,
-        lineItems = data.lineItems.map { DocLineItem.from(it) },
+        lineItems = data.lineItems.map { DocLineItem.from(it, data.currency) },
         iban = data.iban,
         notes = data.notes,
         vatBreakdown = data.vatBreakdown,
@@ -93,7 +93,7 @@ fun DocDto.Companion.from(data: DocumentDraftData): DocDto = when (data) {
         subtotalAmount = data.subtotalAmount,
         vatAmount = data.vatAmount,
         totalAmount = data.totalAmount,
-        lineItems = data.lineItems.map { DocLineItem.from(it) },
+        lineItems = data.lineItems.map { DocLineItem.from(it, data.currency) },
         reason = data.reason,
         notes = data.notes,
         vatBreakdown = data.vatBreakdown,
@@ -109,7 +109,7 @@ fun DocDto.Companion.from(data: DocumentDraftData): DocDto = when (data) {
         currency = data.currency,
         totalAmount = data.totalAmount,
         vatAmount = data.vatAmount,
-        lineItems = data.lineItems.map { DocLineItem.from(it) },
+        lineItems = data.lineItems.map { DocLineItem.from(it, data.currency) },
         receiptNumber = data.receiptNumber,
         notes = data.notes,
         vatBreakdown = data.vatBreakdown,

@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.documents.AttachmentService
 import tech.dokus.domain.exceptions.DokusException
-import tech.dokus.domain.ids.AttachmentId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.ExpenseId
 import tech.dokus.domain.ids.InvoiceId

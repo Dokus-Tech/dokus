@@ -18,10 +18,12 @@ internal fun DuplicateBadge(modifier: Modifier = Modifier) {
     Text(
         text = stringResource(Res.string.bank_statement_duplicate_badge),
         style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.tertiary,
+        color = MaterialTheme.colorScheme.primary,
+        maxLines = 1,
+        softWrap = false,
         modifier = modifier
             .clip(RoundedCornerShape(Constraints.Spacing.xSmall))
-            .background(MaterialTheme.colorScheme.tertiary.copy(alpha = 0.12f))
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
             .padding(
                 horizontal = Constraints.Spacing.small,
                 vertical = Constraints.Spacing.xxSmall,

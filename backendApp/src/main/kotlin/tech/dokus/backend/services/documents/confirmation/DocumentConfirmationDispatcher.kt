@@ -3,6 +3,7 @@ package tech.dokus.backend.services.documents.confirmation
 import tech.dokus.backend.services.banking.BankStatementProcessingService
 import tech.dokus.backend.services.cashflow.matching.MatchingEngine
 import tech.dokus.backend.services.documents.DocumentPurposeSimilarityService
+import tech.dokus.backend.services.documents.RAGIndexingService
 import tech.dokus.database.repository.cashflow.DocumentRepository
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.exceptions.DokusException
@@ -64,7 +65,6 @@ import tech.dokus.domain.model.VatReturnDraftData
 import tech.dokus.domain.model.WithholdingTaxDraftData
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.foundation.backend.utils.loggerFor
-import tech.dokus.backend.services.documents.RAGIndexingService
 import tech.dokus.foundation.backend.utils.runSuspendCatching
 
 /**

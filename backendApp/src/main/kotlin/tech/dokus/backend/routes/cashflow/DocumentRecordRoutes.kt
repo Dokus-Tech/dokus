@@ -23,9 +23,6 @@ import kotlinx.coroutines.launch
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
 import tech.dokus.backend.mappers.from
-import tech.dokus.domain.model.DocumentDraftDto
-import tech.dokus.domain.model.DocumentIngestionDto
-import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.documents.DocumentIntakeServiceResult
 import tech.dokus.backend.services.documents.DocumentLifecycleService
@@ -47,6 +44,8 @@ import tech.dokus.domain.model.BulkReprocessRequest
 import tech.dokus.domain.model.DocumentCollectionChangedEventDto
 import tech.dokus.domain.model.DocumentDeletedEventDto
 import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentDraftDto
+import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentStreamEventNames
 import tech.dokus.domain.model.DownloadZipRequest
 import tech.dokus.domain.model.RejectDocumentRequest
@@ -100,7 +99,9 @@ internal fun Route.documentRecordRoutes() {
             val limit = route.limit.coerceIn(1, 100)
             val filter = route.filter
 
-            logger.info("Listing documents: tenant=$tenantId, filter=$filter, page=$page, limit=${limit}, sortBy=${route.sortBy}")
+            logger.info(
+                "Listing documents: tenant=$tenantId, filter=$filter, page=$page, limit=$limit, sortBy=${route.sortBy}"
+            )
 
             if (filter != null && (route.documentStatus != null || route.ingestionStatus != null)) {
                 throw DokusException.BadRequest("Do not combine 'filter' with 'documentStatus' or 'ingestionStatus'")
@@ -278,7 +279,10 @@ internal fun Route.documentRecordRoutes() {
                     while (true) {
                         when (signalQueue.receive()) {
                             DocumentSnapshotSignal.Changed -> { if (!sendSnapshotOrDeleted()) break }
-                            DocumentSnapshotSignal.Deleted -> { sendDeletedEvent(); break }
+                            DocumentSnapshotSignal.Deleted -> {
+                                sendDeletedEvent()
+                                break
+                            }
                         }
                     }
                 } finally {
@@ -450,7 +454,10 @@ internal fun Route.documentRecordRoutes() {
             val tenantId = requireTenantId()
             val documentId = DocumentId.parse(route.parent.id)
             val runs = lifecycleService.getIngestionHistory(tenantId, documentId)
-            call.respond(HttpStatusCode.OK, runs.map { DocumentIngestionDto.from(it, includeRawExtraction = true, includeTrace = true) })
+            call.respond(
+                HttpStatusCode.OK,
+                runs.map { DocumentIngestionDto.from(it, includeRawExtraction = true, includeTrace = true) }
+            )
         }
 
         /**

@@ -14,6 +14,7 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.DocumentRejectReason
 import tech.dokus.domain.enums.DocumentSource
+import tech.dokus.foundation.aura.extensions.formatLabel
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.IngestionStatus
@@ -147,6 +148,7 @@ data class DocumentDetailState(
     val isContactRequired: Boolean = false,
     val contactValidationError: DokusException? = null,
     val isBindingContact: Boolean = false,
+    val detectedContactAccepted: Boolean = false,
     val isRejecting: Boolean = false,
     val isResolvingMatchReview: Boolean = false,
     val documentStatus: DocumentStatus? = null,
@@ -219,6 +221,10 @@ data class DocumentDetailState(
     /** True when document data has loaded successfully. */
     val hasContent: Boolean
         get() = document.isSuccess()
+
+    /** Format label for the download button (e.g., "PDF", "CSV", "XML + PDF"). */
+    val downloadFormatLabel: String
+        get() = documentRecord?.sources?.firstOrNull()?.formatLabel ?: "PDF"
 
     /** True when AI extraction is still in progress (Queued or Processing). */
     val isProcessing: Boolean
@@ -303,6 +309,8 @@ data class DocumentDetailState(
     val contactMatchStatus: ContactMatchStatus
         get() = when {
             effectiveContact is ResolvedContact.Linked -> ContactMatchStatus.Matched
+            effectiveContact is ResolvedContact.Detected && detectedContactAccepted ->
+                ContactMatchStatus.Matched
             effectiveContact is ResolvedContact.Suggested && draftData.isContactRequired ->
                 ContactMatchStatus.Uncertain
             effectiveContact is ResolvedContact.Detected && draftData.isContactRequired ->

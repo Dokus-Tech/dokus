@@ -1,6 +1,7 @@
 package tech.dokus.features.contacts.mvi
 
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.ContactNoteId
 import tech.dokus.domain.ids.TenantId
@@ -44,8 +45,8 @@ internal class StubGetContactInvoiceSnapshotUseCase : GetContactInvoiceSnapshotU
     override suspend fun invoke(contactId: ContactId) = Result.success(
         ContactInvoiceSnapshot(
             documentsCount = 0,
-            totalVolume = Money.ZERO,
-            outstanding = Money.ZERO,
+            totalVolume = Money.zero(Currency.Eur),
+            outstanding = Money.zero(Currency.Eur),
             recentDocuments = emptyList()
         )
     )

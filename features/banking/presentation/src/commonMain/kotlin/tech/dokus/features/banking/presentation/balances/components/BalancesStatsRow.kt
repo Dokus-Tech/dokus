@@ -116,10 +116,10 @@ private fun BalancesStatsRowPreview(
     TestWrapper(parameters) {
         BalancesStatsRow(
             summary = BankAccountSummaryDto(
-                totalBalance = Money(1778042),
+                totalBalance = Money.eur(1778042),
                 accountCount = 2,
                 unmatchedCount = 3,
-                totalUnresolvedAmount = Money(842050),
+                totalUnresolvedAmount = Money.eur(842050),
                 matchedThisPeriod = 12,
                 lastSyncedAt = null,
             ),

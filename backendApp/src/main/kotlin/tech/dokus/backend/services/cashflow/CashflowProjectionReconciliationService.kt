@@ -42,7 +42,7 @@ class CashflowProjectionReconciliationService(
                 ).getOrThrow()
 
                 val remainingAmount = entity.totalAmount.minus(entity.paidAmount).let {
-                    if (it.isNegative) Money.ZERO else it
+                    if (it.isNegative) Money.zero(entity.totalAmount.currency) else it
                 }
                 val status = if (remainingAmount.isZero) CashflowEntryStatus.Paid else CashflowEntryStatus.Open
                 val paidAt = if (status == CashflowEntryStatus.Paid) entity.paidAt else null
@@ -70,7 +70,7 @@ class CashflowProjectionReconciliationService(
                 documentId = documentId,
                 expenseDate = entity.date,
                 amountGross = entity.amount,
-                amountVat = entity.vatAmount ?: Money.ZERO,
+                amountVat = entity.vatAmount ?: Money.zero(entity.amount.currency),
                 contactId = entity.contactId
             ).getOrThrow().id
 

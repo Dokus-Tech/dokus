@@ -10,6 +10,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.features.cashflow.presentation.detail.DocumentPreviewState
@@ -25,9 +26,9 @@ private val previewExistingUiData = DocumentUiData.Invoice(
     invoiceNumber = "384421507",
     issueDate = "2025-01-09",
     dueDate = "2025-01-08",
-    subtotalAmount = Money.from("57.01"),
-    vatAmount = Money.from("11.97"),
-    totalAmount = Money.from("68.98"),
+    subtotalAmount = Money.from("57.01", Currency.Eur),
+    vatAmount = Money.from("11.97", Currency.Eur),
+    totalAmount = Money.from("68.98", Currency.Eur),
     currencySign = "\u20AC",
     lineItems = emptyList(),
     notes = null,
@@ -40,9 +41,9 @@ private val previewIncomingUiData = DocumentUiData.Invoice(
     invoiceNumber = "INV-2026-0005",
     issueDate = "2026-02-14",
     dueDate = "2026-02-14",
-    subtotalAmount = Money.from("238.84"),
-    vatAmount = Money.from("50.16"),
-    totalAmount = Money.from("289.00"),
+    subtotalAmount = Money.from("238.84", Currency.Eur),
+    vatAmount = Money.from("50.16", Currency.Eur),
+    totalAmount = Money.from("289.00", Currency.Eur),
     currencySign = "\u20AC",
     lineItems = emptyList(),
     notes = null,

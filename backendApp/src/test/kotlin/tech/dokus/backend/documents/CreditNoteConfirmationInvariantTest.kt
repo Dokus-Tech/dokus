@@ -163,8 +163,8 @@ class CreditNoteConfirmationInvariantTest {
             documentId = invoiceDocumentId,
             direction = CashflowDirection.Out,
             eventDate = LocalDate(2024, 2, 10),
-            amountGross = Money.from("1000.00")!!,
-            amountVat = Money.from("210.00")!!,
+            amountGross = Money.from("1000.00", Currency.Eur)!!,
+            amountVat = Money.from("210.00", Currency.Eur)!!,
             contactId = contactId
         ).getOrThrow()
 
@@ -173,9 +173,9 @@ class CreditNoteConfirmationInvariantTest {
             direction = DocumentDirection.Inbound,
             issueDate = LocalDate(2024, 2, 2),
             currency = Currency.Eur,
-            subtotalAmount = Money.from("300.00"),
-            vatAmount = Money.from("63.00"),
-            totalAmount = Money.from("363.00"),
+            subtotalAmount = Money.from("300.00", Currency.Eur),
+            vatAmount = Money.from("63.00", Currency.Eur),
+            totalAmount = Money.from("363.00", Currency.Eur),
             originalInvoiceNumber = invoiceNumber
         )
         val creditNoteDocumentId = seedCreditNoteDraft(draftData)
@@ -188,8 +188,8 @@ class CreditNoteConfirmationInvariantTest {
         assertNull(cashflowEntriesRepository.getByDocumentId(tenantId, creditNoteDocumentId).getOrThrow())
 
         val entryAfter = cashflowEntriesRepository.getEntry(originalEntry.id, tenantId).getOrThrow()
-        assertEquals(Money.from("1000.00")!!, entryAfter?.amountGross)
-        assertEquals(Money.from("1000.00")!!, entryAfter?.remainingAmount)
+        assertEquals(Money.from("1000.00", Currency.Eur)!!, entryAfter?.amountGross)
+        assertEquals(Money.from("1000.00", Currency.Eur)!!, entryAfter?.remainingAmount)
         assertEquals(CashflowEntryStatus.Open, entryAfter?.status)
 
         val links = documentLinkRepository.getBySourceAndType(
@@ -210,9 +210,9 @@ class CreditNoteConfirmationInvariantTest {
             direction = DocumentDirection.Inbound,
             issueDate = LocalDate(2024, 2, 3),
             currency = Currency.Eur,
-            subtotalAmount = Money.from("100.00"),
-            vatAmount = Money.from("21.00"),
-            totalAmount = Money.from("121.00"),
+            subtotalAmount = Money.from("100.00", Currency.Eur),
+            vatAmount = Money.from("21.00", Currency.Eur),
+            totalAmount = Money.from("121.00", Currency.Eur),
             originalInvoiceNumber = originalInvoiceNumber
         )
         val creditNoteDocumentId = seedCreditNoteDraft(draftData)

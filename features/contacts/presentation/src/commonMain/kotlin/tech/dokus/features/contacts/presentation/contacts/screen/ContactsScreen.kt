@@ -275,8 +275,8 @@ private fun ContactsDesktopMasterDetailPreview(
                                 invoiceSnapshotState = DokusState.success(
                                     ContactInvoiceSnapshot(
                                         documentsCount = 2,
-                                        totalVolume = Money(53801),
-                                        outstanding = Money(24901),
+                                        totalVolume = Money.eur(53801),
+                                        outstanding = Money.eur(24901),
                                         recentDocuments = emptyList()
                                     )
                                 ),

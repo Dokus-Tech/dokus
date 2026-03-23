@@ -1,12 +1,12 @@
 package tech.dokus.backend.services.peppol
 
+import tech.dokus.database.entity.PeppolResolutionEntity
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolDirectoryCacheRepository
 import tech.dokus.domain.enums.PeppolLookupSource
 import tech.dokus.domain.enums.PeppolLookupStatus
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.database.entity.PeppolResolutionEntity
 import tech.dokus.domain.model.PeppolStatusResponse
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.peppol.provider.client.RecommandProvider

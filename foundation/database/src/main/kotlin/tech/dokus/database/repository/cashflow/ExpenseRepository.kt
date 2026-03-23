@@ -239,7 +239,7 @@ class ExpenseRepository {
                 (ExpensesTable.documentId inList documentIds.map { UUID.fromString(it.toString()) })
         }.associate { row ->
             val docId = DocumentId.parse(row[ExpensesTable.documentId]!!.toString())
-            val amount = Money.fromDbDecimal(row[ExpensesTable.amount])
+            val amount = Money.fromDbDecimal(row[ExpensesTable.amount], Currency.Eur)
             docId to (amount to Currency.Eur)
         }
     }

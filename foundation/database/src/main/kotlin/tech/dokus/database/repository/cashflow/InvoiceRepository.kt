@@ -97,7 +97,7 @@ class InvoiceRepository(
                         item.lineTotal.toDbDecimal() + item.vatAmount.toDbDecimal()
                     }
                 it[paidAmount] = BigDecimal.ZERO
-                it[status] = InvoiceStatus.Draft
+                it[status] = if (request.documentId != null) InvoiceStatus.Sent else InvoiceStatus.Draft
                 it[InvoicesTable.direction] = request.direction
                 it[notes] = request.notes
                 it[documentId] = request.documentId?.let { docId -> UUID.fromString(docId.toString()) }
@@ -123,11 +123,12 @@ class InvoiceRepository(
                     (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single()
 
+            val currency = row[InvoicesTable.currency]
             val items = InvoiceItemsTable.selectAll().where {
                 InvoiceItemsTable.invoiceId eq invoiceId.value
             }.orderBy(InvoiceItemsTable.sortOrder)
                 .map { itemRow ->
-                    InvoiceItemEntity.from(itemRow, InvoiceId.parse(invoiceId.value.toString()))
+                    InvoiceItemEntity.from(itemRow, InvoiceId.parse(invoiceId.value.toString()), currency)
                 }
 
             InvoiceEntity.from(row, items)
@@ -149,11 +150,12 @@ class InvoiceRepository(
             }.singleOrNull() ?: return@dbQuery null
 
             // Fetch invoice items
+            val currency = row[InvoicesTable.currency]
             val items = InvoiceItemsTable.selectAll().where {
                 InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
             }.orderBy(InvoiceItemsTable.sortOrder)
                 .map { itemRow ->
-                    InvoiceItemEntity.from(itemRow, invoiceId)
+                    InvoiceItemEntity.from(itemRow, invoiceId, currency)
                 }
 
             // Map to domain model
@@ -299,8 +301,9 @@ class InvoiceRepository(
                 (InvoicesTable.id eq invoiceUuid) and (InvoicesTable.tenantId eq tenantUuid)
             }.singleOrNull() ?: throw IllegalArgumentException("Invoice not found or access denied")
 
-            val total = Money.fromDbDecimal(row[InvoicesTable.totalAmount])
-            val currentPaid = Money.fromDbDecimal(row[InvoicesTable.paidAmount])
+            val invoiceCurrency = row[InvoicesTable.currency]
+            val total = Money.fromDbDecimal(row[InvoicesTable.totalAmount], invoiceCurrency)
+            val currentPaid = Money.fromDbDecimal(row[InvoicesTable.paidAmount], invoiceCurrency)
 
             // Idempotency: already fully paid
             if (currentPaid.minor >= total.minor) {
@@ -422,11 +425,12 @@ class InvoiceRepository(
                     (InvoicesTable.tenantId eq UUID.fromString(tenantId.toString()))
             }.single()
 
+            val currency = row[InvoicesTable.currency]
             val items = InvoiceItemsTable.selectAll().where {
                 InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
             }.orderBy(InvoiceItemsTable.sortOrder)
                 .map { itemRow ->
-                    InvoiceItemEntity.from(itemRow, invoiceId)
+                    InvoiceItemEntity.from(itemRow, invoiceId, currency)
                 }
 
             InvoiceEntity.from(row, items)
@@ -502,11 +506,12 @@ class InvoiceRepository(
         }.singleOrNull()?.let { row ->
             // Fetch invoice items
             val invoiceId = InvoiceId.parse(row[InvoicesTable.id].value.toString())
+            val currency = row[InvoicesTable.currency]
             val items = InvoiceItemsTable.selectAll().where {
                 InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
             }.orderBy(InvoiceItemsTable.sortOrder)
                 .map { itemRow ->
-                    InvoiceItemEntity.from(itemRow, invoiceId)
+                    InvoiceItemEntity.from(itemRow, invoiceId, currency)
                 }
 
             InvoiceEntity.from(row, items).copy(id = invoiceId)
@@ -526,11 +531,12 @@ class InvoiceRepository(
                 (InvoicesTable.invoiceNumber eq invoiceNumber)
         }.singleOrNull()?.let { row ->
             val invoiceId = InvoiceId.parse(row[InvoicesTable.id].value.toString())
+            val currency = row[InvoicesTable.currency]
             val items = InvoiceItemsTable.selectAll().where {
                 InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
             }.orderBy(InvoiceItemsTable.sortOrder)
                 .map { itemRow ->
-                    InvoiceItemEntity.from(itemRow, invoiceId)
+                    InvoiceItemEntity.from(itemRow, invoiceId, currency)
                 }
 
             InvoiceEntity.from(row, items).copy(id = invoiceId)
@@ -551,8 +557,8 @@ class InvoiceRepository(
                 (InvoicesTable.documentId inList documentIds.map { UUID.fromString(it.toString()) })
         }.associate { row ->
             val docId = DocumentId.parse(row[InvoicesTable.documentId]!!.toString())
-            val amount = Money.fromDbDecimal(row[InvoicesTable.totalAmount])
             val currency = row[InvoicesTable.currency]
+            val amount = Money.fromDbDecimal(row[InvoicesTable.totalAmount], currency)
             docId to (amount to currency)
         }
     }
@@ -572,10 +578,11 @@ class InvoiceRepository(
                 ?: return@dbQuery null
 
             val invoiceId = InvoiceId.parse(row[InvoicesTable.id].value.toString())
+            val currency = row[InvoicesTable.currency]
             val items = InvoiceItemsTable.selectAll().where {
                 InvoiceItemsTable.invoiceId eq UUID.fromString(invoiceId.toString())
             }.orderBy(InvoiceItemsTable.sortOrder)
-                .map { itemRow -> InvoiceItemEntity.from(itemRow, invoiceId) }
+                .map { itemRow -> InvoiceItemEntity.from(itemRow, invoiceId, currency) }
 
             InvoiceEntity.from(row, items).copy(id = invoiceId)
         }

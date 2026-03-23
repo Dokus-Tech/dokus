@@ -1,7 +1,7 @@
 package tech.dokus.backend.services.documents.resolution
 
-import tech.dokus.database.mapper.from
 import tech.dokus.backend.services.documents.resolution.ContactMatchingUtils.Companion.StrongNameThreshold
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.model.contact.ContactDto
 import tech.dokus.domain.model.contact.ContactResolution

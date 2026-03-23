@@ -8,8 +8,8 @@ import tech.dokus.backend.services.business.CrawledBusinessPage
 import tech.dokus.backend.services.business.LogoPipelineTotalBudgetMs
 import tech.dokus.backend.services.business.LogoSelectionResult
 import tech.dokus.backend.services.business.LogoSelectionTrace
-import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.entity.BusinessProfileEnrichmentJobEntity
+import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.business.BusinessProfileRepository
 import tech.dokus.domain.enums.BusinessProfileSubjectType
 import tech.dokus.features.ai.agents.BusinessLogoFallbackAgent

@@ -247,8 +247,8 @@ class CreditNoteRepository {
                 (CreditNotesTable.documentId inList documentIds.map { UUID.fromString(it.toString()) })
         }.associate { row ->
             val docId = DocumentId.parse(row[CreditNotesTable.documentId]!!.toString())
-            val amount = Money.fromDbDecimal(row[CreditNotesTable.totalAmount])
             val currency = row[CreditNotesTable.currency]
+            val amount = Money.fromDbDecimal(row[CreditNotesTable.totalAmount], currency)
             docId to (amount to currency)
         }
     }

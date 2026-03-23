@@ -710,6 +710,7 @@
     <string name="bank_statement_movement">Movement</string>
     <string name="bank_statement_col_date">Date</string>
     <string name="bank_statement_col_description">Description</string>
+    <string name="bank_statement_col_counterparty">Counterparty</string>
     <string name="bank_statement_col_communication">Communication</string>
     <string name="bank_statement_col_amount">Amount</string>
     <string name="bank_statement_duplicate_badge">Duplicate</string>

@@ -14,9 +14,9 @@ import org.slf4j.LoggerFactory
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.documents.DocumentTruthService
-import tech.dokus.database.repository.cashflow.selectPreferredSourceDto
-import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
 import tech.dokus.backend.services.documents.IntakeResolution
+import tech.dokus.backend.services.documents.sse.DocumentSsePublisher
+import tech.dokus.database.repository.cashflow.selectPreferredSourceDto
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.model.DocumentIntakeResult

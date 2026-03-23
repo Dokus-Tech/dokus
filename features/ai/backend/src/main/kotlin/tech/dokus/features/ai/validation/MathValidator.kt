@@ -67,16 +67,16 @@ object MathValidator {
             AuditCheck.passed(
                 type = CheckType.MATH,
                 field = "totals",
-                message = "Math verified: ${subtotal.toDisplayString()} + ${vatAmount.toDisplayString()} = ${total.toDisplayString()}"
+                message = "Math verified: ${subtotal.formatAmount()} + ${vatAmount.formatAmount()} = ${total.formatAmount()}"
             )
         } else {
             AuditCheck.criticalFailure(
                 type = CheckType.MATH,
                 field = "totals",
-                message = "Math error: ${subtotal.toDisplayString()} + ${vatAmount.toDisplayString()} != ${total.toDisplayString()}",
+                message = "Math error: ${subtotal.formatAmount()} + ${vatAmount.formatAmount()} != ${total.formatAmount()}",
                 hint = buildMathHint(expected, total),
-                expected = expected.toDisplayString(),
-                actual = total.toDisplayString()
+                expected = expected.formatAmount(),
+                actual = total.formatAmount()
             )
         }
     }
@@ -108,24 +108,24 @@ object MathValidator {
             )
         }
 
-        val sum = lineItemTotals.fold(Money.ZERO) { acc, item -> acc + item }
+        val sum = lineItemTotals.fold(Money.zero(subtotal.currency)) { acc, item -> acc + item }
         val difference = abs(sum.minor - subtotal.minor)
 
         return if (difference <= TOLERANCE_CENTS) {
             AuditCheck.passed(
                 type = CheckType.MATH,
                 field = "lineItems",
-                message = "Line items sum verified: ${sum.toDisplayString()} matches subtotal"
+                message = "Line items sum verified: ${sum.formatAmount()} matches subtotal"
             )
         } else {
             // This is a WARNING, not CRITICAL - could be hidden items
             AuditCheck.warning(
                 type = CheckType.MATH,
                 field = "lineItems",
-                message = "Line items sum (${sum.toDisplayString()}) doesn't match subtotal (${subtotal.toDisplayString()})",
+                message = "Line items sum (${sum.formatAmount()}) doesn't match subtotal (${subtotal.formatAmount()})",
                 hint = "Check for missing line items, discounts, or rounding differences",
-                expected = subtotal.toDisplayString(),
-                actual = sum.toDisplayString()
+                expected = subtotal.formatAmount(),
+                actual = sum.formatAmount()
             )
         }
     }
@@ -156,7 +156,7 @@ object MathValidator {
         // Calculate expected: quantity * unitPrice
         // Using minor units: (quantity * unitPrice.minor).toLong()
         val expectedMinor = (quantity * unitPrice.minor).toLong()
-        val expected = Money(expectedMinor)
+        val expected = Money(expectedMinor, unitPrice.currency)
         val difference = abs(expected.minor - lineTotal.minor)
 
         return if (difference <= TOLERANCE_CENTS) {
@@ -169,10 +169,10 @@ object MathValidator {
             AuditCheck.warning(
                 type = CheckType.MATH,
                 field = "lineItem[$lineIndex]",
-                message = "Line $lineIndex: $quantity x ${unitPrice.toDisplayString()} != ${lineTotal.toDisplayString()}",
+                message = "Line $lineIndex: $quantity x ${unitPrice.formatAmount()} != ${lineTotal.formatAmount()}",
                 hint = "Check quantity and unit price for line item $lineIndex",
-                expected = expected.toDisplayString(),
-                actual = lineTotal.toDisplayString()
+                expected = expected.formatAmount(),
+                actual = lineTotal.formatAmount()
             )
         }
     }
@@ -185,7 +185,7 @@ object MathValidator {
 
         return buildString {
             append("Re-read the total amount. ")
-            append("Expected ${expected.toDisplayString()}, found ${actual.toDisplayString()}. ")
+            append("Expected ${expected.formatAmount()}, found ${actual.formatAmount()}. ")
 
             // Provide specific guidance based on the difference
             when {

@@ -1,10 +1,9 @@
 package tech.dokus.backend.services.contacts
 
-import tech.dokus.database.mapper.from
 import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.backend.services.business.EnrichmentTrigger
 import tech.dokus.backend.services.cashflow.InvoiceBankAutomationService
-import tech.dokus.database.entity.ContactEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.contacts.ContactAddressRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.peppol.PeppolDirectoryCacheRepository
@@ -242,7 +241,8 @@ class ContactService(
         if (!request.websiteUrl.isNullOrBlank()) {
             runCatching {
                 businessProfileService.updateContactProfile(
-                    tenantId, contactId,
+                    tenantId,
+                    contactId,
                     UpdateBusinessProfileRequest(websiteUrl = request.websiteUrl)
                 )
             }.onFailure { error ->
@@ -273,7 +273,11 @@ class ContactService(
                 if (nameChanged) {
                     businessProfileService.enqueueContact(tenantId, contactId, EnrichmentTrigger.ContactNameChanged)
                         .onFailure { error ->
-                            logger.warn("Failed to enqueue enrichment after name change for {}: {}", contactId, error.message)
+                            logger.warn(
+                                "Failed to enqueue enrichment after name change for {}: {}",
+                                contactId,
+                                error.message
+                            )
                         }
                 }
                 hydrateSingle(tenantId, updated) ?: updated

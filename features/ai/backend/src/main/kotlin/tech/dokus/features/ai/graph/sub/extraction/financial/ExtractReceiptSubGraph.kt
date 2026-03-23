@@ -121,16 +121,17 @@ private class ReceiptExtractionFinishTool : Tool<ReceiptExtractionToolInput, Fin
     description = "Submit extracted receipt fields from the document. Only include values you can see."
 ) {
     override suspend fun execute(args: ReceiptExtractionToolInput): FinancialExtractionResult.Receipt {
+        val currency = Currency.from(args.currency)
         return FinancialExtractionResult.Receipt(
             ReceiptExtractionResult(
                 merchantName = args.merchantName,
                 merchantVat = VatNumber.from(args.merchantVat),
                 date = args.date,
-                currency = Currency.from(args.currency),
-                totalAmount = Money.from(args.totalAmount),
-                vatAmount = Money.from(args.vatAmount),
-                lineItems = args.lineItems.orEmpty().mapNotNull { it.toDomain() },
-                vatBreakdown = args.vatBreakdown.orEmpty().mapNotNull { it.toDomain() },
+                currency = currency,
+                totalAmount = Money.from(args.totalAmount, currency),
+                vatAmount = Money.from(args.vatAmount, currency),
+                lineItems = args.lineItems.orEmpty().mapNotNull { it.toDomain(currency) },
+                vatBreakdown = args.vatBreakdown.orEmpty().mapNotNull { it.toDomain(currency) },
                 receiptNumber = args.receiptNumber,
                 paymentMethod = args.paymentMethod,
                 counterparty = args.toCounterpartyExtraction(),

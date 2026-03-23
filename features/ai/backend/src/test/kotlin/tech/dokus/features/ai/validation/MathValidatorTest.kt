@@ -1,6 +1,7 @@
 package tech.dokus.features.ai.validation
 
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -14,9 +15,9 @@ class MathValidatorTest {
 
     @Test
     fun `verifyTotals passes when math is correct`() {
-        val subtotal = Money.parse("100.00")
-        val vatAmount = Money.parse("21.00")
-        val total = Money.parse("121.00")
+        val subtotal = Money.parse("100.00", Currency.Eur)
+        val vatAmount = Money.parse("21.00", Currency.Eur)
+        val total = Money.parse("121.00", Currency.Eur)
 
         val result = MathValidator.verifyTotals(subtotal, vatAmount, total)
 
@@ -27,9 +28,9 @@ class MathValidatorTest {
 
     @Test
     fun `verifyTotals passes within 2 cent tolerance`() {
-        val subtotal = Money.parse("100.00")
-        val vatAmount = Money.parse("21.00")
-        val total = Money.parse("121.02") // Off by 2 cents
+        val subtotal = Money.parse("100.00", Currency.Eur)
+        val vatAmount = Money.parse("21.00", Currency.Eur)
+        val total = Money.parse("121.02", Currency.Eur) // Off by 2 cents
 
         val result = MathValidator.verifyTotals(subtotal, vatAmount, total)
 
@@ -38,9 +39,9 @@ class MathValidatorTest {
 
     @Test
     fun `verifyTotals fails when difference exceeds tolerance`() {
-        val subtotal = Money.parse("100.00")
-        val vatAmount = Money.parse("21.00")
-        val total = Money.parse("120.00") // Off by 1.00
+        val subtotal = Money.parse("100.00", Currency.Eur)
+        val vatAmount = Money.parse("21.00", Currency.Eur)
+        val total = Money.parse("120.00", Currency.Eur) // Off by 1.00
 
         val result = MathValidator.verifyTotals(subtotal, vatAmount, total)
 
@@ -53,8 +54,8 @@ class MathValidatorTest {
 
     @Test
     fun `verifyTotals returns incomplete when subtotal is null`() {
-        val vatAmount = Money.parse("21.00")
-        val total = Money.parse("121.00")
+        val vatAmount = Money.parse("21.00", Currency.Eur)
+        val total = Money.parse("121.00", Currency.Eur)
 
         val result = MathValidator.verifyTotals(null, vatAmount, total)
 
@@ -78,11 +79,11 @@ class MathValidatorTest {
     @Test
     fun `verifyLineItems passes when sum matches subtotal`() {
         val lineItemTotals = listOf(
-            Money.parse("50.00")!!,
-            Money.parse("30.00")!!,
-            Money.parse("20.00")!!
+            Money.parse("50.00", Currency.Eur)!!,
+            Money.parse("30.00", Currency.Eur)!!,
+            Money.parse("20.00", Currency.Eur)!!
         )
-        val subtotal = Money.parse("100.00")
+        val subtotal = Money.parse("100.00", Currency.Eur)
 
         val result = MathValidator.verifyLineItems(lineItemTotals, subtotal)
 
@@ -93,10 +94,10 @@ class MathValidatorTest {
     @Test
     fun `verifyLineItems warns when sum does not match`() {
         val lineItemTotals = listOf(
-            Money.parse("50.00")!!,
-            Money.parse("30.00")!!
+            Money.parse("50.00", Currency.Eur)!!,
+            Money.parse("30.00", Currency.Eur)!!
         )
-        val subtotal = Money.parse("100.00")
+        val subtotal = Money.parse("100.00", Currency.Eur)
 
         val result = MathValidator.verifyLineItems(lineItemTotals, subtotal)
 
@@ -107,7 +108,7 @@ class MathValidatorTest {
 
     @Test
     fun `verifyLineItems returns incomplete when no line items`() {
-        val result = MathValidator.verifyLineItems(emptyList(), Money.parse("100.00"))
+        val result = MathValidator.verifyLineItems(emptyList(), Money.parse("100.00", Currency.Eur))
 
         assertTrue(result.passed)
         assertTrue(result.message.contains("No line items"))
@@ -120,8 +121,8 @@ class MathValidatorTest {
     @Test
     fun `verifyLineItemCalculation passes when quantity times unit price equals total`() {
         val quantity = 3.0
-        val unitPrice = Money.parse("25.00")
-        val lineTotal = Money.parse("75.00")
+        val unitPrice = Money.parse("25.00", Currency.Eur)
+        val lineTotal = Money.parse("75.00", Currency.Eur)
 
         val result = MathValidator.verifyLineItemCalculation(quantity, unitPrice, lineTotal, 1)
 
@@ -132,8 +133,8 @@ class MathValidatorTest {
     @Test
     fun `verifyLineItemCalculation warns when calculation is wrong`() {
         val quantity = 3.0
-        val unitPrice = Money.parse("25.00")
-        val lineTotal = Money.parse("100.00") // Should be 75.00
+        val unitPrice = Money.parse("25.00", Currency.Eur)
+        val lineTotal = Money.parse("100.00", Currency.Eur) // Should be 75.00
 
         val result = MathValidator.verifyLineItemCalculation(quantity, unitPrice, lineTotal, 2)
 

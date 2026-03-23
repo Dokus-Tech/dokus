@@ -12,9 +12,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.bank_statement_col_amount
 import tech.dokus.aura.resources.bank_statement_col_communication
+import tech.dokus.aura.resources.bank_statement_col_counterparty
 import tech.dokus.aura.resources.bank_statement_col_date
 import tech.dokus.aura.resources.bank_statement_col_description
 import org.jetbrains.compose.resources.stringResource
@@ -65,8 +67,9 @@ private fun TransactionTableHeader(
             androidx.compose.foundation.layout.Spacer(modifier = Modifier.width(BankStatementColumnWidths.Checkbox))
         }
         HeaderCell(stringResource(Res.string.bank_statement_col_date), Modifier.width(BankStatementColumnWidths.Date))
-        HeaderCell(stringResource(Res.string.bank_statement_col_description), Modifier.weight(1f))
-        HeaderCell(stringResource(Res.string.bank_statement_col_communication), Modifier.width(BankStatementColumnWidths.Communication))
+        HeaderCell(stringResource(Res.string.bank_statement_col_description), Modifier.weight(BankStatementColumnWeights.Description))
+        HeaderCell(stringResource(Res.string.bank_statement_col_counterparty), Modifier.weight(BankStatementColumnWeights.Counterparty))
+        HeaderCell(stringResource(Res.string.bank_statement_col_communication), Modifier.weight(BankStatementColumnWeights.Communication))
         HeaderCell(
             stringResource(Res.string.bank_statement_col_amount),
             Modifier.width(BankStatementColumnWidths.Amount),
@@ -85,6 +88,8 @@ private fun HeaderCell(
         text = text.uppercase(),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
         modifier = modifier,
         textAlign = textAlign,
     )

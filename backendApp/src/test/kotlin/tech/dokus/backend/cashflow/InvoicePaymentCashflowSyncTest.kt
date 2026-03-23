@@ -21,6 +21,7 @@ import tech.dokus.database.tables.cashflow.InvoicesTable
 import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
@@ -132,14 +133,14 @@ class InvoicePaymentCashflowSyncTest {
             documentId = null,
             direction = CashflowDirection.In,
             eventDate = LocalDate(2024, 1, 31),
-            amountGross = Money.from("121.00")!!,
-            amountVat = Money.from("21.00")!!,
+            amountGross = Money.from("121.00", Currency.Eur)!!,
+            amountVat = Money.from("21.00", Currency.Eur)!!,
             contactId = null
         ).getOrThrow()
 
         val request = RecordPaymentRequest(
             invoiceId = invoiceId,
-            amount = Money.from("121.00")!!,
+            amount = Money.from("121.00", Currency.Eur)!!,
             paymentDate = LocalDate(2024, 2, 10),
             paymentMethod = PaymentMethod.BankTransfer
         )
@@ -152,7 +153,7 @@ class InvoicePaymentCashflowSyncTest {
 
         val updated = cashflowEntriesRepository.getEntry(entry.id, tenantId).getOrThrow()
         assertNotNull(updated)
-        assertEquals(Money.ZERO, updated.remainingAmount)
+        assertEquals(Money.zero(Currency.Eur), updated.remainingAmount)
         assertEquals(CashflowEntryStatus.Paid, updated.status)
         assertEquals(LocalDateTime(2024, 2, 10, 12, 0, 0), updated.paidAt)
     }

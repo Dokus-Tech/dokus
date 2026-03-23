@@ -1,11 +1,11 @@
 package tech.dokus.backend.services.cashflow
 
 import kotlinx.datetime.Clock
-import kotlinx.serialization.json.Json
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.inList
@@ -14,36 +14,36 @@ import org.jetbrains.exposed.v1.jdbc.insertAndGetId
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
 import org.jetbrains.exposed.v1.jdbc.update
+import tech.dokus.database.entity.BankTransactionEntity
+import tech.dokus.database.entity.CashflowEntryEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.cashflow.AutoPaymentAuditRepository
 import tech.dokus.database.repository.cashflow.AutoPaymentRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
+import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.database.tables.cashflow.CashflowEntriesTable
 import tech.dokus.database.tables.cashflow.InvoicesTable
-import tech.dokus.database.tables.banking.BankTransactionsTable
 import tech.dokus.database.tables.documents.TransactionMatchLinksTable
 import tech.dokus.database.tables.payment.PaymentsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.enums.AutoPaymentDecision
 import tech.dokus.domain.enums.AutoPaymentTriggerSource
+import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
-import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.enums.PaymentCreatedBy
 import tech.dokus.domain.enums.PaymentMethod
 import tech.dokus.domain.enums.PaymentSource
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.fromDbDecimal
-import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.BankTransactionId
+import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.PaymentId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.AutoPaymentStatus
-import tech.dokus.database.entity.CashflowEntryEntity
-import tech.dokus.database.entity.BankTransactionEntity
-import tech.dokus.database.mapper.from
 import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.toDbDecimal
 import tech.dokus.foundation.backend.utils.runSuspendCatching
@@ -319,7 +319,7 @@ class AutoPaymentService(
             return@newSuspendedTransaction AutoPayApplyResult(false, null)
         }
 
-        val currentPaid = Money.fromDbDecimal(invoiceRow[InvoicesTable.paidAmount])
+        val currentPaid = Money.fromDbDecimal(invoiceRow[InvoicesTable.paidAmount], entry.amountGross.currency)
         if (!currentPaid.isZero) {
             auditRepository.appendAudit(
                 tenantUuid = tenantUuid,
@@ -397,7 +397,10 @@ class AutoPaymentService(
         val bookingDateTime = LocalDateTime(transaction.transactionDate, LocalTime(0, 0))
 
         val invoiceStatusBefore = invoiceRow[InvoicesTable.status]
-        val invoicePaidAmountBefore = Money.fromDbDecimal(invoiceRow[InvoicesTable.paidAmount])
+        val invoicePaidAmountBefore = Money.fromDbDecimal(
+            invoiceRow[InvoicesTable.paidAmount],
+            entry.amountGross.currency
+        )
         val invoicePaidAtBefore = invoiceRow[InvoicesTable.paidAt]
 
         val entryRow = CashflowEntriesTable.selectAll().where {
@@ -405,18 +408,21 @@ class AutoPaymentService(
         }.singleOrNull() ?: throw DokusException.NotFound("Cashflow entry not found")
 
         val cashflowStatusBefore = entryRow[CashflowEntriesTable.status]
-        val cashflowRemainingBefore = Money.fromDbDecimal(entryRow[CashflowEntriesTable.remainingAmount])
+        val cashflowRemainingBefore = Money.fromDbDecimal(
+            entryRow[CashflowEntriesTable.remainingAmount],
+            entry.amountGross.currency
+        )
         val cashflowPaidAtBefore = entryRow[CashflowEntriesTable.paidAt]
 
         CashflowEntriesTable.update({
             (CashflowEntriesTable.id eq entryUuid) and (CashflowEntriesTable.tenantId eq tenantUuid)
         }) {
-            it[remainingAmount] = Money.ZERO.toDbDecimal()
+            it[remainingAmount] = Money.zero(entry.amountGross.currency).toDbDecimal()
             it[status] = CashflowEntryStatus.Paid
             it[paidAt] = bookingDateTime
         }
 
-        val totalAmount = Money.fromDbDecimal(invoiceRow[InvoicesTable.totalAmount])
+        val totalAmount = Money.fromDbDecimal(invoiceRow[InvoicesTable.totalAmount], entry.amountGross.currency)
         InvoicesTable.update({
             (InvoicesTable.id eq invoiceUuid) and (InvoicesTable.tenantId eq tenantUuid)
         }) {

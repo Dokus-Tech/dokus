@@ -440,14 +440,15 @@ class PeppolService(
                     provider.markAsRead(inboxItem.id)
                         .getOrNull() // Ignore errors on marking as read
 
+                    val docCurrency = tech.dokus.domain.enums.Currency.from(fullDocument.currencyCode)
                     processedDocuments.add(
                         ProcessedPeppolDocument(
                             transmissionId = transmission.id,
                             documentId = documentId,
                             senderPeppolId = PeppolId(inboxItem.senderPeppolId),
                             invoiceNumber = fullDocument.invoiceNumber,
-                            totalAmount = fullDocument.totals?.payableAmount?.let { Money.fromDouble(it) }
-                                ?: fullDocument.totals?.taxInclusiveAmount?.let { Money.fromDouble(it) },
+                            totalAmount = fullDocument.totals?.payableAmount?.let { Money.fromDouble(it, docCurrency) }
+                                ?: fullDocument.totals?.taxInclusiveAmount?.let { Money.fromDouble(it, docCurrency) },
                             receivedAt = now
                         )
                     )

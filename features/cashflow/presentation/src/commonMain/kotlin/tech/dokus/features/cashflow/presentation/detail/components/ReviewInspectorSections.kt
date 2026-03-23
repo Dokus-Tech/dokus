@@ -88,9 +88,9 @@ internal fun InspectorAmountSection(
     isReadOnly: Boolean = true,
     onIntent: (DocumentDetailIntent) -> Unit = {},
 ) {
-    val subtotalDisplay = subtotal?.let { "$currencySign${it.toDisplayString()}" }
-    val vatDisplay = vat?.let { "$currencySign${it.toDisplayString()}" }
-    val totalDisplay = total?.let { "$currencySign${it.toDisplayString()}" }
+    val subtotalDisplay = subtotal?.let { "$currencySign${it.formatAmount()}" }
+    val vatDisplay = vat?.let { "$currencySign${it.formatAmount()}" }
+    val totalDisplay = total?.let { "$currencySign${it.formatAmount()}" }
 
     InspectorSectionCard(title = stringResource(Res.string.inspector_section_amount)) {
         EditableAmountRow(

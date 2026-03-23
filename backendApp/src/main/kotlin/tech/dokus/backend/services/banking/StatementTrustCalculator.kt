@@ -44,7 +44,7 @@ class StatementTrustCalculator {
         val expectedClosingMinor = opening.minor + validRowAmounts
         val actualClosingMinor = closing.minor
         val gapMinor = expectedClosingMinor - actualClosingMinor
-        val gap = Money(gapMinor)
+        val gap = Money(gapMinor, closing.currency)
 
         // Cap at MEDIUM if account is PendingReview
         val maxTrust = if (accountStatus == BankAccountStatus.PendingReview) {

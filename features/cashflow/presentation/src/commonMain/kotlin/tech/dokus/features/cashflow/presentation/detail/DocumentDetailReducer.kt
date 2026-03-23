@@ -269,25 +269,25 @@ private fun applyFieldUpdate(data: DocDto?, field: EditableField, value: String)
             EditableField.InvoiceNumber -> data.copy(invoiceNumber = trimmed)
             EditableField.IssueDate -> data.copy(issueDate = trimmed?.let { parseDate(it) })
             EditableField.DueDate -> data.copy(dueDate = trimmed?.let { parseDate(it) })
-            EditableField.SubtotalAmount -> data.copy(subtotalAmount = trimmed?.let { Money.from(it) })
-            EditableField.VatAmount -> data.copy(vatAmount = trimmed?.let { Money.from(it) })
-            EditableField.TotalAmount -> data.copy(totalAmount = trimmed?.let { Money.from(it) })
+            EditableField.SubtotalAmount -> data.copy(subtotalAmount = trimmed?.let { Money.from(it, data.currency) })
+            EditableField.VatAmount -> data.copy(vatAmount = trimmed?.let { Money.from(it, data.currency) })
+            EditableField.TotalAmount -> data.copy(totalAmount = trimmed?.let { Money.from(it, data.currency) })
             else -> null
         }
         is DocDto.CreditNote.Draft -> when (field) {
             EditableField.CreditNoteNumber -> data.copy(creditNoteNumber = trimmed)
             EditableField.IssueDate -> data.copy(issueDate = trimmed?.let { parseDate(it) })
             EditableField.OriginalInvoiceNumber -> data.copy(originalInvoiceNumber = trimmed)
-            EditableField.SubtotalAmount -> data.copy(subtotalAmount = trimmed?.let { Money.from(it) })
-            EditableField.VatAmount -> data.copy(vatAmount = trimmed?.let { Money.from(it) })
-            EditableField.TotalAmount -> data.copy(totalAmount = trimmed?.let { Money.from(it) })
+            EditableField.SubtotalAmount -> data.copy(subtotalAmount = trimmed?.let { Money.from(it, data.currency) })
+            EditableField.VatAmount -> data.copy(vatAmount = trimmed?.let { Money.from(it, data.currency) })
+            EditableField.TotalAmount -> data.copy(totalAmount = trimmed?.let { Money.from(it, data.currency) })
             else -> null
         }
         is DocDto.Receipt.Draft -> when (field) {
             EditableField.ReceiptNumber -> data.copy(receiptNumber = trimmed)
             EditableField.ReceiptDate -> data.copy(date = trimmed?.let { parseDate(it) })
-            EditableField.VatAmount -> data.copy(vatAmount = trimmed?.let { Money.from(it) })
-            EditableField.TotalAmount -> data.copy(totalAmount = trimmed?.let { Money.from(it) })
+            EditableField.VatAmount -> data.copy(vatAmount = trimmed?.let { Money.from(it, data.currency) })
+            EditableField.TotalAmount -> data.copy(totalAmount = trimmed?.let { Money.from(it, data.currency) })
             else -> null
         }
         else -> null

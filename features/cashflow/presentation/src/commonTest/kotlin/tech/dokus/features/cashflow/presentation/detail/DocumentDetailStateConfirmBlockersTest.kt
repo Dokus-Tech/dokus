@@ -3,6 +3,7 @@ package tech.dokus.features.cashflow.presentation.detail
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
@@ -33,8 +34,8 @@ class DocumentDetailStateConfirmBlockersTest {
             InvoiceDraftData(
                 direction = DocumentDirection.Unknown,
                 issueDate = LocalDate(2026, 2, 10),
-                subtotalAmount = Money.from("100.00"),
-                vatAmount = Money.from("21.00"),
+                subtotalAmount = Money.from("100.00", Currency.Eur),
+                vatAmount = Money.from("21.00", Currency.Eur),
                 totalAmount = null,
             )
         )
@@ -49,9 +50,9 @@ class DocumentDetailStateConfirmBlockersTest {
             InvoiceDraftData(
                 direction = DocumentDirection.Unknown,
                 issueDate = LocalDate(2026, 2, 10),
-                subtotalAmount = Money.from("100.00"),
+                subtotalAmount = Money.from("100.00", Currency.Eur),
                 vatAmount = null,
-                totalAmount = Money.from("121.00"),
+                totalAmount = Money.from("121.00", Currency.Eur),
             )
         )
 
@@ -64,9 +65,9 @@ class DocumentDetailStateConfirmBlockersTest {
             CreditNoteDraftData(
                 direction = DocumentDirection.Unknown,
                 issueDate = LocalDate(2026, 2, 10),
-                subtotalAmount = Money.from("100.00"),
+                subtotalAmount = Money.from("100.00", Currency.Eur),
                 vatAmount = null,
-                totalAmount = Money.from("121.00"),
+                totalAmount = Money.from("121.00", Currency.Eur),
             )
         )
 
@@ -92,7 +93,7 @@ class DocumentDetailStateConfirmBlockersTest {
                 direction = DocumentDirection.Inbound,
                 merchantName = null,
                 date = LocalDate(2026, 2, 10),
-                totalAmount = Money.from("12.34"),
+                totalAmount = Money.from("12.34", Currency.Eur),
                 vatAmount = null,
             )
         )
@@ -108,9 +109,9 @@ class DocumentDetailStateConfirmBlockersTest {
                 direction = DocumentDirection.Inbound,
                 creditNoteNumber = null,
                 issueDate = LocalDate(2026, 2, 10),
-                subtotalAmount = Money.from("100.00"),
-                vatAmount = Money.from("21.00"),
-                totalAmount = Money.from("121.00"),
+                subtotalAmount = Money.from("100.00", Currency.Eur),
+                vatAmount = Money.from("21.00", Currency.Eur),
+                totalAmount = Money.from("121.00", Currency.Eur),
             ),
             selectedContactId = ContactId.parse("8d2af381-d2bc-4f7f-8d2d-fae6dcbecf77"),
         )
@@ -126,7 +127,7 @@ class DocumentDetailStateConfirmBlockersTest {
                 direction = DocumentDirection.Inbound,
                 merchantName = "Coffee shop",
                 date = LocalDate(2026, 2, 10),
-                totalAmount = Money.from("12.34"),
+                totalAmount = Money.from("12.34", Currency.Eur),
                 vatAmount = null,
             )
         )
@@ -231,9 +232,9 @@ class DocumentDetailStateConfirmBlockersTest {
     ) = InvoiceDraftData(
         direction = direction,
         issueDate = LocalDate(2026, 2, 10),
-        subtotalAmount = Money.from("100.00"),
-        vatAmount = Money.from("21.00"),
-        totalAmount = Money.from("121.00"),
+        subtotalAmount = Money.from("100.00", Currency.Eur),
+        vatAmount = Money.from("21.00", Currency.Eur),
+        totalAmount = Money.from("121.00", Currency.Eur),
     )
 
     private fun DocumentDraftData.toType(): DocumentType = toDocumentType()

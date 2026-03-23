@@ -20,6 +20,7 @@ import tech.dokus.aura.resources.profile_deactivate_account
 import tech.dokus.aura.resources.profile_deactivate_warning
 import tech.dokus.aura.resources.profile_logout
 import tech.dokus.aura.resources.profile_version_footer
+import tech.dokus.domain.config.appVersion
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.settings.SettingsRow
 import tech.dokus.foundation.aura.components.text.DokusLabel
@@ -39,7 +40,10 @@ internal fun DangerZoneCard(
     DokusCardSurface(modifier = modifier.fillMaxWidth()) {
         Column {
             Box(modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp)) {
-                DokusLabel(text = stringResource(Res.string.profile_danger_zone), color = MaterialTheme.colorScheme.error)
+                DokusLabel(
+                    text = stringResource(Res.string.profile_danger_zone),
+                    color = MaterialTheme.colorScheme.error
+                )
             }
             Box(modifier = Modifier.padding(horizontal = 18.dp).padding(bottom = 8.dp)) {
                 Text(
@@ -84,7 +88,7 @@ internal fun VersionFooter(
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = stringResource(Res.string.profile_version_footer, "0.1.0", "Core"),
+        text = stringResource(Res.string.profile_version_footer, appVersion.versionName, "Core"),
         modifier = modifier.fillMaxWidth().padding(vertical = 10.dp),
         textAlign = TextAlign.Center,
         fontSize = 10.sp,

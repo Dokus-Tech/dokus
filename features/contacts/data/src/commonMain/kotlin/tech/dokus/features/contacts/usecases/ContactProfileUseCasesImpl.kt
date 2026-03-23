@@ -4,6 +4,8 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
+import tech.dokus.domain.enums.CreditNoteStatus
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.InvoiceStatus
@@ -108,8 +110,8 @@ internal class GetContactInvoiceSnapshotUseCaseImpl(
     }
 
     private suspend fun buildSnapshot(documents: List<DocumentListItemDto>): ContactInvoiceSnapshot = coroutineScope {
-        val totalVolume = documents.fold(Money.ZERO) { sum, doc ->
-            sum + (doc.totalAmount ?: Money.ZERO)
+        val totalVolume = documents.fold(Money.zero(Currency.Eur)) { sum, doc ->
+            sum + (doc.totalAmount ?: Money.zero(Currency.Eur))
         }
 
         val confirmedDocs = documents.filter { it.documentStatus == DocumentStatus.Confirmed }
@@ -128,7 +130,7 @@ internal class GetContactInvoiceSnapshotUseCaseImpl(
         ContactInvoiceSnapshot(
             documentsCount = documents.size,
             totalVolume = totalVolume,
-            outstanding = Money.ZERO,
+            outstanding = Money.zero(Currency.Eur),
             recentDocuments = recentDocuments
         )
     }
@@ -138,7 +140,7 @@ private fun DocumentListItemDto.toRecentDocument(
     detail: DocumentDetailDto?,
 ): ContactRecentInvoice {
     val invoiceContent = detail?.draft?.content as? DocDto.Invoice.Confirmed
-    val outstanding = if (invoiceContent != null) invoiceOutstandingAmount(invoiceContent) else Money.ZERO
+    val outstanding = if (invoiceContent != null) invoiceOutstandingAmount(invoiceContent) else Money.zero(Currency.Eur)
 
     return ContactRecentInvoice(
         invoiceId = invoiceContent?.id ?: InvoiceId.parse("00000000-0000-0000-0000-000000000000"),
@@ -146,21 +148,38 @@ private fun DocumentListItemDto.toRecentDocument(
         issueDate = sortDate,
         updatedAt = uploadedAt,
         direction = direction ?: DocumentDirection.Unknown,
-        status = invoiceContent?.status ?: InvoiceStatus.Draft,
-        totalAmount = totalAmount ?: Money.ZERO,
+        status = resolveInvoiceStatus(detail?.draft?.content),
+        totalAmount = totalAmount ?: Money.zero(Currency.Eur),
         outstandingAmount = outstanding,
         summary = resolveRecentDocumentSummary(detail),
         reference = resolveRecentDocumentReference(detail, this),
     )
 }
 
+private fun resolveInvoiceStatus(content: DocDto?): InvoiceStatus {
+    return when (content) {
+        is DocDto.Invoice.Confirmed -> content.status
+        is DocDto.Invoice.Draft -> InvoiceStatus.Draft
+        is DocDto.CreditNote.Confirmed -> when (content.status) {
+            CreditNoteStatus.Draft -> InvoiceStatus.Draft
+            CreditNoteStatus.Confirmed -> InvoiceStatus.Sent
+            CreditNoteStatus.Settled -> InvoiceStatus.Paid
+            CreditNoteStatus.Cancelled -> InvoiceStatus.Cancelled
+        }
+        is DocDto.CreditNote.Draft -> InvoiceStatus.Draft
+        // All other confirmed document types — they're confirmed, so treat as "Paid"/done
+        null -> InvoiceStatus.Draft
+        else -> InvoiceStatus.Paid
+    }
+}
+
 private fun invoiceOutstandingAmount(
     invoice: DocDto.Invoice.Confirmed,
 ): Money {
-    if (invoice.status !in OutstandingStatuses) return Money.ZERO
-    val total = invoice.totalAmount ?: return Money.ZERO
+    if (invoice.status !in OutstandingStatuses) return Money.zero(Currency.Eur)
+    val total = invoice.totalAmount ?: return Money.zero(Currency.Eur)
     val remainder = total - invoice.paidAmount
-    return if (remainder.isNegative) Money.ZERO else remainder
+    return if (remainder.isNegative) Money.zero(Currency.Eur) else remainder
 }
 
 internal fun resolveRecentDocumentSummary(

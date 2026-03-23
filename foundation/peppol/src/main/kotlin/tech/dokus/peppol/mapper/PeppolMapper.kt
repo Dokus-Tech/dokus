@@ -177,17 +177,18 @@ class PeppolMapper {
         val dueDate = document.dueDate?.let { parseDate(it) } ?: issueDate
 
         // Amounts
-        val totalAmount = totals?.payableAmount?.let { Money.fromDouble(it) }
-            ?: totals?.taxInclusiveAmount?.let { Money.fromDouble(it) }
-        val vatAmount = taxTotal?.taxAmount?.let { Money.fromDouble(it) }
-        val subtotalAmount = totals?.taxExclusiveAmount?.let { Money.fromDouble(it) }
+        val currency = Currency.from(document.currencyCode)
+        val totalAmount = totals?.payableAmount?.let { Money.fromDouble(it, currency) }
+            ?: totals?.taxInclusiveAmount?.let { Money.fromDouble(it, currency) }
+        val vatAmount = taxTotal?.taxAmount?.let { Money.fromDouble(it, currency) }
+        val subtotalAmount = totals?.taxExclusiveAmount?.let { Money.fromDouble(it, currency) }
             ?: if (totalAmount != null && vatAmount != null) totalAmount - vatAmount else null
 
         val lineItems = document.lineItems.orEmpty().mapNotNull { line ->
             val description = line.description ?: line.name ?: return@mapNotNull null
             val quantity = line.quantity?.takeIf { it % 1.0 == 0.0 }?.toLong()
-            val unitPrice = line.unitPrice?.let { Money.fromDouble(it).minor }
-            val netAmount = line.lineTotal?.let { Money.fromDouble(it).minor }
+            val unitPrice = line.unitPrice?.let { Money.fromDouble(it, currency).minor }
+            val netAmount = line.lineTotal?.let { Money.fromDouble(it, currency).minor }
             val vatRate = line.taxPercent?.let { (it * 100).roundToInt() }
 
             FinancialLineItemDto(
@@ -201,8 +202,8 @@ class PeppolMapper {
 
         val vatBreakdown = taxTotal?.taxSubtotals.orEmpty().mapNotNull { subtotal ->
             val rate = subtotal.taxPercent?.let { (it * 100).roundToInt() } ?: return@mapNotNull null
-            val base = subtotal.taxableAmount?.let { Money.fromDouble(it).minor } ?: return@mapNotNull null
-            val amount = subtotal.taxAmount?.let { Money.fromDouble(it).minor } ?: return@mapNotNull null
+            val base = subtotal.taxableAmount?.let { Money.fromDouble(it, currency).minor } ?: return@mapNotNull null
+            val amount = subtotal.taxAmount?.let { Money.fromDouble(it, currency).minor } ?: return@mapNotNull null
             VatBreakdownEntryDto(
                 rate = rate,
                 base = base,
@@ -210,7 +211,6 @@ class PeppolMapper {
             )
         }
 
-        val currency = Currency.from(document.currencyCode)
         val notes = document.note ?: "Received via Peppol from $senderPeppolId"
 
         return when (document.documentType) {

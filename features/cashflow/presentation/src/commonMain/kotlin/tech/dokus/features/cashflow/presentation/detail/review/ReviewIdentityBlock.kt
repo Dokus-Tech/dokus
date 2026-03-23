@@ -88,7 +88,7 @@ internal fun resolveVendorName(state: DocumentDetailState): String {
 internal fun resolveDisplayAmount(state: DocumentDetailState): String {
     val amount = state.totalAmount ?: return "\u2014"
     val currency = resolveCurrency(state.draftData)
-    return "${currency.displaySign}${amount.toDisplayString()}"
+    return "${currency.displaySign}${amount.formatAmount()}"
 }
 
 private fun resolveCurrency(draftData: DocDto?): Currency = when (draftData) {

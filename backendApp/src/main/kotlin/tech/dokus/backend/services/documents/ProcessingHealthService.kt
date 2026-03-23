@@ -108,7 +108,10 @@ class ProcessingHealthService(
 
         logger.info(
             "Bulk reprocess for tenant {}: queued={}, skipped={}, candidates={}",
-            tenantId, queued, skipped, candidates.size
+            tenantId,
+            queued,
+            skipped,
+            candidates.size
         )
 
         return BulkReprocessResponse(queuedCount = queued, skippedCount = skipped)

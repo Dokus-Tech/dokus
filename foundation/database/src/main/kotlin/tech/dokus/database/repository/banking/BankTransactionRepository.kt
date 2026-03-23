@@ -505,7 +505,7 @@ class BankTransactionRepository {
                 }.map { row ->
                     DateAmountKey(
                         row[BankTransactionsTable.transactionDate],
-                        Money.fromDbDecimal(row[BankTransactionsTable.signedAmount]),
+                        Money.fromDbDecimal(row[BankTransactionsTable.signedAmount], row[BankTransactionsTable.currency]),
                     )
                 }.toSet()
 

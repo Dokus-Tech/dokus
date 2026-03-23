@@ -8,6 +8,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import tech.dokus.foundation.aura.style.positionNegative
+import tech.dokus.foundation.aura.style.positionPositive
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.bank_statement_closing_balance
 import tech.dokus.aura.resources.bank_statement_movement
@@ -42,9 +45,15 @@ internal fun BankStatementBalanceRow(
             )
         }
         movement?.let {
+            val movementColor = if (it.startsWith("-")) {
+                MaterialTheme.colorScheme.positionNegative
+            } else {
+                MaterialTheme.colorScheme.positionPositive
+            }
             BalanceCell(
                 label = stringResource(Res.string.bank_statement_movement),
                 value = "$currencyPrefix$it",
+                valueColor = movementColor,
                 modifier = Modifier.weight(1f),
             )
         }
@@ -56,6 +65,7 @@ private fun BalanceCell(
     label: String,
     value: String,
     modifier: Modifier = Modifier,
+    valueColor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
     Column(
         modifier = modifier,
@@ -69,7 +79,7 @@ private fun BalanceCell(
         Text(
             text = value,
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+            color = valueColor,
         )
     }
 }

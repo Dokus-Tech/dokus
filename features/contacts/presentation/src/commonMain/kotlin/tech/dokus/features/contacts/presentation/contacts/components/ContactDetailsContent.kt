@@ -140,8 +140,8 @@ private fun ContactDetailsContentPreview(
             invoiceSnapshotState = DokusState.success(
                 ContactInvoiceSnapshot(
                     documentsCount = 3,
-                    totalVolume = Money(129652),
-                    outstanding = Money(96252),
+                    totalVolume = Money.eur(129652),
+                    outstanding = Money.eur(96252),
                     recentDocuments = emptyList()
                 )
             ),

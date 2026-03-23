@@ -76,7 +76,7 @@ internal fun ReviewTopBar(
                     }
                     if (showAmountLine) {
                         UnderstandingLine(
-                            totalAmount = state.totalAmount?.toDisplayString(),
+                            totalAmount = state.totalAmount?.formatAmount(),
                             isBlocking = state.isBlocking,
                             hasAttention = state.hasAttention,
                             isProcessing = state.isProcessing
@@ -92,6 +92,7 @@ internal fun ReviewTopBar(
                     DownloadPdfButton(
                         downloadState = state.downloadState,
                         onClick = onDownloadPdf,
+                        formatLabel = state.downloadFormatLabel,
                     )
                 }
             },

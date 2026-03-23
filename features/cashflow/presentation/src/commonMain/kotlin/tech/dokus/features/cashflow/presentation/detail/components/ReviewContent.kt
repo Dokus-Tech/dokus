@@ -42,6 +42,7 @@ import tech.dokus.aura.resources.cashflow_awaiting_extraction
 import tech.dokus.aura.resources.cashflow_loading_document
 import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.model.DocumentSourceDto
+import tech.dokus.foundation.aura.extensions.formatLabel
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailIntent
 import tech.dokus.features.cashflow.presentation.detail.mvi.preview.DocumentPreviewIntent
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
@@ -429,10 +430,11 @@ private fun sourceTabs(sources: List<DocumentSourceDto>): List<SourceTabItem> {
             val index = (sourceChannelIndices[source.sourceChannel] ?: 0) + 1
             sourceChannelIndices[source.sourceChannel] = index
             val hasDuplicates = (sourceChannelCounts[source.sourceChannel] ?: 0) > 1
+            val formatLabel = source.formatLabel.uppercase()
             val label = if (hasDuplicates) {
-                "${source.sourceChannel.localizedUppercase} $index"
+                "$formatLabel $index"
             } else {
-                source.sourceChannel.localizedUppercase
+                formatLabel
             }
             add(SourceTabItem(id = source.id.toString(), label = label))
         }

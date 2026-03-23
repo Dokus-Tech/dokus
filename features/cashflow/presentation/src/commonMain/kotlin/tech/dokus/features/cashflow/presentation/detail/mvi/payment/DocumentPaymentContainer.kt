@@ -148,7 +148,7 @@ internal class DocumentPaymentContainer(
             updateState {
                 copy(
                     paymentSheetState = PaymentSheetState(
-                        amountText = entry.remainingAmount.toDisplayString(),
+                        amountText = entry.remainingAmount.formatAmount(),
                         amount = entry.remainingAmount,
                         isLoadingTransactions = true
                     )
@@ -197,7 +197,7 @@ internal class DocumentPaymentContainer(
                                         selectableTransactions = selectableTransactions,
                                         paidAt = selected?.transactionDate ?: currentSheet.paidAt,
                                         amount = selectedAmount ?: currentSheet.amount,
-                                        amountText = selectedAmount?.toDisplayString() ?: currentSheet.amountText,
+                                        amountText = selectedAmount?.formatAmount() ?: currentSheet.amountText,
                                         isLoadingTransactions = false,
                                         transactionsError = null
                                     )
@@ -258,7 +258,7 @@ internal class DocumentPaymentContainer(
                         selectedTransaction = selected,
                         paidAt = selected.transactionDate,
                         amount = selectedAmount,
-                        amountText = selectedAmount.toDisplayString(),
+                        amountText = selectedAmount.formatAmount(),
                         amountError = null,
                         showTransactionPicker = false
                     )
@@ -284,11 +284,14 @@ internal class DocumentPaymentContainer(
     private suspend fun PaymentCtx.handleUpdatePaymentAmountText(text: String) {
         withState {
             val sheet = paymentSheetState ?: return@withState
+            val currency = sheet.amount?.currency
+                ?: (cashflowEntryState as? DokusState.Success<CashflowEntryDto>)?.data?.currency
+                ?: tech.dokus.domain.enums.Currency.Eur
             updateState {
                 copy(
                     paymentSheetState = sheet.copy(
                         amountText = text,
-                        amount = Money.from(text),
+                        amount = Money.from(text, currency),
                         amountError = null
                     )
                 )

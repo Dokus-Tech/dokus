@@ -404,7 +404,7 @@ internal class CashFlowOverviewContainer(
 private fun getMockBalanceIfEnabled(): BalanceState? {
     return if (BuildKonfig.SHOW_BALANCE_MOCK) {
         BalanceState(
-            amount = tech.dokus.domain.Money(1248234),
+            amount = tech.dokus.domain.Money(1248234, tech.dokus.domain.enums.Currency.Eur),
             asOf = LocalDate(2026, 1, 15),
             accountName = "KBC"
         )

@@ -6,6 +6,7 @@ import tech.dokus.database.tables.cashflow.ExpensesTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.Percentage
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
@@ -18,8 +19,8 @@ fun ExpenseEntity.Companion.from(row: ResultRow): ExpenseEntity = ExpenseEntity(
     tenantId = TenantId.parse(row[ExpensesTable.tenantId].toString()),
     date = row[ExpensesTable.date],
     merchant = row[ExpensesTable.merchant],
-    amount = Money.fromDbDecimal(row[ExpensesTable.amount]),
-    vatAmount = row[ExpensesTable.vatAmount]?.let { Money.fromDbDecimal(it) },
+    amount = Money.fromDbDecimal(row[ExpensesTable.amount], Currency.Eur),
+    vatAmount = row[ExpensesTable.vatAmount]?.let { Money.fromDbDecimal(it, Currency.Eur) },
     vatRate = row[ExpensesTable.vatRate]?.let { VatRate.fromDbDecimal(it) },
     category = row[ExpensesTable.category],
     description = row[ExpensesTable.description],

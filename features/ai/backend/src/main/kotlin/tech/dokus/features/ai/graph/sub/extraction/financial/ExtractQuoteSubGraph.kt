@@ -98,15 +98,16 @@ private class QuoteExtractionFinishTool : Tool<QuoteExtractionToolInput, Financi
     description = "Submit extracted quote fields from the document. Only include values you can see.",
 ) {
     override suspend fun execute(args: QuoteExtractionToolInput): FinancialExtractionResult.Quote {
+        val currency = Currency.from(args.currency)
         return FinancialExtractionResult.Quote(
             QuoteExtractionResult(
                 quoteNumber = args.quoteNumber,
                 issueDate = args.issueDate,
                 validUntil = args.validUntil,
-                currency = Currency.from(args.currency),
-                subtotalAmount = Money.from(args.subtotalAmount),
-                vatAmount = Money.from(args.vatAmount),
-                totalAmount = Money.from(args.totalAmount),
+                currency = currency,
+                subtotalAmount = Money.from(args.subtotalAmount, currency),
+                vatAmount = Money.from(args.vatAmount, currency),
+                totalAmount = Money.from(args.totalAmount, currency),
                 customerName = args.customerName,
                 customerVat = VatNumber.from(args.customerVat),
                 customerEmail = Email.from(args.customerEmail),

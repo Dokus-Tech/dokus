@@ -54,7 +54,12 @@ class AccountResolutionService(
         if (!providerAccountId.isNullOrBlank()) {
             val byProvider = bankAccountRepository.findByProviderAccountId(tenantId, providerAccountId)
             if (byProvider != null) {
-                logger.info("Resolved providerAccountId {} to account {} for tenant {}", providerAccountId, byProvider.id, tenantId)
+                logger.info(
+                    "Resolved providerAccountId {} to account {} for tenant {}",
+                    providerAccountId,
+                    byProvider.id,
+                    tenantId
+                )
                 return@runSuspendCatching AccountResolution.Resolved(
                     accountId = byProvider.id,
                     accountStatus = byProvider.status,
@@ -107,7 +112,10 @@ class AccountResolutionService(
 
         logger.info(
             "Auto-created account {} (status={}) for IBAN {} tenant {}",
-            created.id, accountStatus, iban, tenantId
+            created.id,
+            accountStatus,
+            iban,
+            tenantId
         )
 
         AccountResolution.Resolved(

@@ -1,6 +1,7 @@
 package tech.dokus.backend.services.cashflow
 
 import org.jetbrains.exposed.v1.jdbc.transactions.experimental.newSuspendedTransaction
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CashflowPaymentRepository
 import tech.dokus.domain.Money
@@ -9,7 +10,6 @@ import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.database.mapper.from
 import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.domain.model.CashflowPaymentRequest
 import tech.dokus.foundation.backend.utils.runSuspendCatching
@@ -41,7 +41,13 @@ class CashflowPaymentService(
             }
 
             val newRemainingRaw = snapshot.remaining - request.amount
-            val newRemaining = if (newRemainingRaw.isNegative) Money.ZERO else newRemainingRaw
+            val newRemaining = if (newRemainingRaw.isNegative) {
+                Money.zero(
+                    snapshot.remaining.currency
+                )
+            } else {
+                newRemainingRaw
+            }
             val fullyPaid = newRemaining.isZero
             val newStatus = if (fullyPaid) CashflowEntryStatus.Paid else snapshot.currentStatus
             val newPaidAt = if (fullyPaid) request.paidAt else snapshot.currentPaidAt

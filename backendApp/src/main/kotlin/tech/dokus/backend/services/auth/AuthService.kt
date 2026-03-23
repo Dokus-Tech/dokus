@@ -4,12 +4,13 @@ package tech.dokus.backend.services.auth
 
 import com.auth0.jwt.JWT
 import kotlinx.datetime.Instant
+import tech.dokus.backend.services.avatar.buildVersionedAvatarThumbnail
 import tech.dokus.backend.services.avatar.projectUserAvatar
 import tech.dokus.database.repository.auth.FirmRepository
-import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.RefreshTokenRepository
 import tech.dokus.database.repository.auth.RevokedSessionInfo
 import tech.dokus.database.repository.auth.SessionRevocationResult
+import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
 import tech.dokus.domain.DeviceType
 import tech.dokus.domain.Password
@@ -20,7 +21,6 @@ import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.FirmMembership
 import tech.dokus.domain.model.TenantMembership
 import tech.dokus.domain.model.User
-import tech.dokus.backend.services.avatar.buildVersionedAvatarThumbnail
 import tech.dokus.domain.model.auth.AccountMeResponse
 import tech.dokus.domain.model.auth.FirmWorkspaceSummary
 import tech.dokus.domain.model.auth.JwtClaims

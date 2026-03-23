@@ -28,6 +28,7 @@ import tech.dokus.aura.resources.vat_predicted_net_amount
 import tech.dokus.aura.resources.vat_quarter_sublabel
 import tech.dokus.aura.resources.vat_summary_title
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCardSurface
@@ -282,9 +283,9 @@ data class VatSummaryData(
     companion object {
         val empty by lazy {
             VatSummaryData(
-                vatAmount = Money.ZERO,
-                netAmount = Money.ZERO,
-                predictedNetAmount = Money.ZERO,
+                vatAmount = Money.zero(Currency.Eur),
+                netAmount = Money.zero(Currency.Eur),
+                predictedNetAmount = Money.zero(Currency.Eur),
                 quarterInfo = null
             )
         }
@@ -301,9 +302,9 @@ fun createVatSummary(
     quarter: String? = null
 ): VatSummaryData {
     return VatSummaryData(
-        vatAmount = Money.parseOrThrow(vat),
-        netAmount = Money.parseOrThrow(net),
-        predictedNetAmount = Money.parseOrThrow(predicted),
+        vatAmount = Money.parseOrThrow(vat, Currency.Eur),
+        netAmount = Money.parseOrThrow(net, Currency.Eur),
+        predictedNetAmount = Money.parseOrThrow(predicted, Currency.Eur),
         quarterInfo = quarter
     )
 }
@@ -321,9 +322,9 @@ private fun VatSummaryCardPreview(
         VatSummaryCard(
             state = DokusState.success(
                 VatSummaryData(
-                    vatAmount = Money.parseOrThrow("3250.00"),
-                    netAmount = Money.parseOrThrow("12500.00"),
-                    predictedNetAmount = Money.parseOrThrow("15000.00"),
+                    vatAmount = Money.parseOrThrow("3250.00", Currency.Eur),
+                    netAmount = Money.parseOrThrow("12500.00", Currency.Eur),
+                    predictedNetAmount = Money.parseOrThrow("15000.00", Currency.Eur),
                     quarterInfo = "Q2 2024"
                 )
             )

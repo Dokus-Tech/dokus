@@ -89,6 +89,7 @@ internal fun DocumentDetailDesktopSplit(
     onDownloadPdf: () -> Unit,
     downloadState: DownloadState,
     hasContent: Boolean,
+    downloadFormatLabel: String = "PDF",
     backLabel: String = "",
     content: @Composable () -> Unit,
     modifier: Modifier = Modifier,
@@ -148,6 +149,7 @@ internal fun DocumentDetailDesktopSplit(
                         onDownloadPdf = onDownloadPdf,
                         downloadState = downloadState,
                         hasContent = hasContent,
+                        downloadFormatLabel = downloadFormatLabel,
                     )
 
                     CompositionLocalProvider(LocalIsInDocDetailMode provides true) {
@@ -171,6 +173,7 @@ private fun DetailTitleBar(
     onDownloadPdf: () -> Unit,
     downloadState: DownloadState,
     hasContent: Boolean,
+    downloadFormatLabel: String = "PDF",
 ) {
     val colorScheme = MaterialTheme.colorScheme
     val spacing = MaterialTheme.dokusSpacing
@@ -208,6 +211,7 @@ private fun DetailTitleBar(
                     DownloadPdfButton(
                         downloadState = downloadState,
                         onClick = onDownloadPdf,
+                        formatLabel = downloadFormatLabel,
                     )
                 }
                 LockIcon(modifier = Modifier.size(12.dp))
@@ -324,7 +328,7 @@ private fun DocumentDetailDesktopSplitPreview(
         id = mockId,
         vendorName = DisplayName("Acme Corp"),
         date = LocalDate(2026, 2, 15),
-        amount = Money.from("1234.56")!!,
+        amount = Money.from("1234.56", Currency.Eur)!!,
         currency = Currency.Eur,
         status = DocQueueStatus.Review,
     )
@@ -334,7 +338,7 @@ private fun DocumentDetailDesktopSplitPreview(
             id = DocumentId.generate(),
             vendorName = DisplayName("Tech Solutions"),
             date = LocalDate(2026, 2, 14),
-            amount = Money.from("890.50")!!,
+            amount = Money.from("890.50", Currency.Eur)!!,
             currency = Currency.Eur,
             status = DocQueueStatus.Paid,
         ),

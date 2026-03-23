@@ -14,8 +14,8 @@ import io.ktor.server.response.respond
 import io.ktor.server.response.respondBytes
 import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
-import tech.dokus.backend.services.avatar.buildUserAvatarThumbnail
 import tech.dokus.backend.services.admin.TenantManagementService
+import tech.dokus.backend.services.avatar.buildUserAvatarThumbnail
 import tech.dokus.backend.services.business.BusinessProfileService
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.TenantId

@@ -123,7 +123,8 @@ class DraftRepository {
             InvoiceDraftItemsTable.draftId eq draftId
         }.orderBy(InvoiceDraftItemsTable.sortOrder).toList()
 
-        val items = itemRows.map { InvoiceDraftItemEntity.from(it) }
+        val currency = row[InvoiceDraftsTable.currency]
+        val items = itemRows.map { InvoiceDraftItemEntity.from(it, currency) }
         val entity = InvoiceDraftEntity.from(row, items)
         DocDto.Invoice.Draft.from(entity)
     }
@@ -142,7 +143,8 @@ class DraftRepository {
             CreditNoteDraftItemsTable.draftId eq draftId
         }.orderBy(CreditNoteDraftItemsTable.sortOrder).toList()
 
-        val items = itemRows.map { CreditNoteDraftItemEntity.from(it) }
+        val currency = row[CreditNoteDraftsTable.currency]
+        val items = itemRows.map { CreditNoteDraftItemEntity.from(it, currency) }
         val entity = CreditNoteDraftEntity.from(row, items)
         DocDto.CreditNote.Draft.from(entity)
     }
@@ -250,8 +252,8 @@ class DraftRepository {
                     (InvoiceDraftsTable.documentId inList invoiceDocIds.map { it.value.toJavaUuid() })
             }.forEach { row ->
                 val docId = DocumentId(row[InvoiceDraftsTable.documentId].toKotlinUuid())
-                val amount = row[InvoiceDraftsTable.totalAmount]?.let { Money.fromDbDecimal(it) }
                 val currency = row[InvoiceDraftsTable.currency]
+                val amount = row[InvoiceDraftsTable.totalAmount]?.let { Money.fromDbDecimal(it, currency) }
                 result[docId] = amount to currency
             }
         }
@@ -262,8 +264,8 @@ class DraftRepository {
                     (CreditNoteDraftsTable.documentId inList creditNoteDocIds.map { it.value.toJavaUuid() })
             }.forEach { row ->
                 val docId = DocumentId(row[CreditNoteDraftsTable.documentId].toKotlinUuid())
-                val amount = row[CreditNoteDraftsTable.totalAmount]?.let { Money.fromDbDecimal(it) }
                 val currency = row[CreditNoteDraftsTable.currency]
+                val amount = row[CreditNoteDraftsTable.totalAmount]?.let { Money.fromDbDecimal(it, currency) }
                 result[docId] = amount to currency
             }
         }
@@ -274,8 +276,8 @@ class DraftRepository {
                     (ReceiptDraftsTable.documentId inList receiptDocIds.map { it.value.toJavaUuid() })
             }.forEach { row ->
                 val docId = DocumentId(row[ReceiptDraftsTable.documentId].toKotlinUuid())
-                val amount = row[ReceiptDraftsTable.totalAmount]?.let { Money.fromDbDecimal(it) }
                 val currency = row[ReceiptDraftsTable.currency]
+                val amount = row[ReceiptDraftsTable.totalAmount]?.let { Money.fromDbDecimal(it, currency) }
                 result[docId] = amount to currency
             }
         }
@@ -396,9 +398,9 @@ class DraftRepository {
                 it[InvoiceDraftItemsTable.draftId] = draftId.value
                 it[InvoiceDraftItemsTable.description] = item.description
                 it[InvoiceDraftItemsTable.quantity] = item.quantity?.toBigDecimal()
-                it[InvoiceDraftItemsTable.unitPrice] = item.unitPrice?.let { price -> Money(price).toDbDecimal() }
+                it[InvoiceDraftItemsTable.unitPrice] = item.unitPrice?.let { price -> Money(price, data.currency).toDbDecimal() }
                 it[InvoiceDraftItemsTable.vatRate] = item.vatRate?.let { rate -> VatRate(rate).toDbDecimal() }
-                it[InvoiceDraftItemsTable.lineTotal] = item.netAmount?.let { amount -> Money(amount).toDbDecimal() }
+                it[InvoiceDraftItemsTable.lineTotal] = item.netAmount?.let { amount -> Money(amount, data.currency).toDbDecimal() }
                 it[InvoiceDraftItemsTable.vatAmount] = null
                 it[InvoiceDraftItemsTable.sortOrder] = index
             }
@@ -430,9 +432,9 @@ class DraftRepository {
                 it[CreditNoteDraftItemsTable.draftId] = draftId.value
                 it[CreditNoteDraftItemsTable.description] = item.description
                 it[CreditNoteDraftItemsTable.quantity] = item.quantity?.toBigDecimal()
-                it[CreditNoteDraftItemsTable.unitPrice] = item.unitPrice?.let { price -> Money(price).toDbDecimal() }
+                it[CreditNoteDraftItemsTable.unitPrice] = item.unitPrice?.let { price -> Money(price, data.currency).toDbDecimal() }
                 it[CreditNoteDraftItemsTable.vatRate] = item.vatRate?.let { rate -> VatRate(rate).toDbDecimal() }
-                it[CreditNoteDraftItemsTable.lineTotal] = item.netAmount?.let { amount -> Money(amount).toDbDecimal() }
+                it[CreditNoteDraftItemsTable.lineTotal] = item.netAmount?.let { amount -> Money(amount, data.currency).toDbDecimal() }
                 it[CreditNoteDraftItemsTable.vatAmount] = null
                 it[CreditNoteDraftItemsTable.sortOrder] = index
             }

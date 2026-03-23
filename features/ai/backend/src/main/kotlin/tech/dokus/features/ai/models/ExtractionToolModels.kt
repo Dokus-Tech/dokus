@@ -4,6 +4,7 @@ import ai.koog.agents.core.tools.annotations.LLMDescription
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.model.FinancialLineItemDto
 import tech.dokus.domain.model.VatBreakdownEntryDto
 import kotlin.math.abs
@@ -34,23 +35,23 @@ data class VatBreakdownToolInput(
     val amount: String?
 )
 
-internal fun LineItemToolInput.toDomain(): FinancialLineItemDto? {
+internal fun LineItemToolInput.toDomain(currency: Currency): FinancialLineItemDto? {
     val desc = title?.trim().orEmpty()
     if (desc.isEmpty()) return null
 
     return FinancialLineItemDto(
         description = desc,
         quantity = parseQuantity(quantity),
-        unitPrice = Money.from(unitPrice)?.minor,
+        unitPrice = Money.from(unitPrice, currency)?.minor,
         vatRate = VatRate.from(vatRate)?.basisPoints,
-        netAmount = Money.from(netAmount)?.minor
+        netAmount = Money.from(netAmount, currency)?.minor
     )
 }
 
-internal fun VatBreakdownToolInput.toDomain(): VatBreakdownEntryDto? {
+internal fun VatBreakdownToolInput.toDomain(currency: Currency): VatBreakdownEntryDto? {
     val rateValue = VatRate.from(rate)?.basisPoints ?: return null
-    val baseValue = Money.from(base)?.minor ?: return null
-    val amountValue = Money.from(amount)?.minor ?: return null
+    val baseValue = Money.from(base, currency)?.minor ?: return null
+    val amountValue = Money.from(amount, currency)?.minor ?: return null
     return VatBreakdownEntryDto(
         rate = rateValue,
         base = baseValue,

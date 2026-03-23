@@ -10,6 +10,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.ids.Iban
 import tech.dokus.features.ai.config.asVisionModel
 import tech.dokus.features.ai.config.finishToolOnly
@@ -110,12 +111,14 @@ private class BankStatementExtractionFinishTool :
         description = "Submit extracted transaction rows from a bank statement document."
     ) {
     override suspend fun execute(args: BankStatementExtractionToolInput): FinancialExtractionResult.BankStatement {
+        // Bank statements default to EUR (Belgian context)
+        val currency = Currency.Eur
         return FinancialExtractionResult.BankStatement(
             BankStatementExtractionResult(
                 rows = args.rows.map { row ->
                     BankStatementTransactionExtractionRow(
                         transactionDate = row.transactionDate,
-                        signedAmount = Money.from(row.signedAmount),
+                        signedAmount = Money.from(row.signedAmount, currency),
                         counterpartyName = row.counterpartyName,
                         counterpartyIban = Iban.from(row.counterpartyIban)?.takeIf { it.isValid },
                         structuredCommunicationRaw = row.structuredCommunicationRaw,
@@ -125,8 +128,8 @@ private class BankStatementExtractionFinishTool :
                     )
                 },
                 accountIban = Iban.from(args.accountIban)?.takeIf { it.isValid },
-                openingBalance = Money.from(args.openingBalance),
-                closingBalance = Money.from(args.closingBalance),
+                openingBalance = Money.from(args.openingBalance, currency),
+                closingBalance = Money.from(args.closingBalance, currency),
                 periodStart = args.periodStart,
                 periodEnd = args.periodEnd,
                 institutionName = args.institutionName?.trim()?.takeIf { it.isNotEmpty() },

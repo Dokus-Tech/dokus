@@ -5,6 +5,8 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import tech.dokus.backend.util.isUniqueViolation
+import tech.dokus.database.entity.CashflowEntryEntity
+import tech.dokus.database.mapper.from
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.domain.Money
@@ -18,8 +20,6 @@ import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.database.entity.CashflowEntryEntity
-import tech.dokus.database.mapper.from
 import tech.dokus.domain.model.CashflowEntryDto
 import tech.dokus.foundation.backend.utils.loggerFor
 import java.util.UUID
@@ -322,7 +322,15 @@ class CashflowEntriesService(
             statuses
         )
         val startDate = tenantRepository.getCashflowTrackingStartDate(tenantId)
-        return cashflowEntriesRepository.listEntries(tenantId, viewMode, fromDate, toDate, direction, statuses, startDate)
+        return cashflowEntriesRepository.listEntries(
+            tenantId,
+            viewMode,
+            fromDate,
+            toDate,
+            direction,
+            statuses,
+            startDate
+        )
             .map { entries -> entries.map { CashflowEntryDto.from(it) } }
             .onSuccess { logger.debug("Retrieved ${it.size} cashflow entries") }
             .onFailure { logger.error("Failed to list cashflow entries for tenant: $tenantId", it) }
@@ -359,7 +367,7 @@ class CashflowEntriesService(
             entry.paidAt
         }
 
-        val normalizedRemaining = if (newRemaining.isNegative) Money.ZERO else newRemaining
+        val normalizedRemaining = if (newRemaining.isNegative) Money.zero(newRemaining.currency) else newRemaining
         return cashflowEntriesRepository.updateRemainingAmountAndStatus(
             entryId = entryId,
             tenantId = tenantId,

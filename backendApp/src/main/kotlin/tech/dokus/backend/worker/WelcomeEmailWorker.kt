@@ -13,9 +13,9 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import tech.dokus.backend.services.auth.EmailService
 import tech.dokus.backend.services.auth.EmailTemplateRenderer
+import tech.dokus.database.entity.WelcomeEmailJobEntity
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.auth.UserRepository
-import tech.dokus.database.entity.WelcomeEmailJobEntity
 import tech.dokus.database.repository.auth.WelcomeEmailJobRepository
 import tech.dokus.database.repository.peppol.PeppolSettingsRepository
 import tech.dokus.foundation.backend.config.EmailConfig

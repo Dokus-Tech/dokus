@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import com.composables.icons.lucide.Check
-import com.composables.icons.lucide.Lucide
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -23,6 +21,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.composables.icons.lucide.Check
+import com.composables.icons.lucide.Lucide
 import org.jetbrains.compose.resources.stringResource
 import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.cashflow_needed_to_complete
@@ -38,27 +38,26 @@ import tech.dokus.aura.resources.payment_loading_automation
 import tech.dokus.aura.resources.payment_record_title
 import tech.dokus.aura.resources.payment_undo_auto
 import tech.dokus.aura.resources.payment_undoing
-import tech.dokus.domain.enums.AutoMatchStatus
 import tech.dokus.domain.model.AutoPaymentStatus
-import tech.dokus.features.cashflow.presentation.detail.models.DocumentUiData
+import tech.dokus.domain.model.contact.ResolvedContact
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailIntent
 import tech.dokus.features.cashflow.presentation.detail.DocumentDetailState
-import tech.dokus.features.cashflow.presentation.detail.mvi.payment.DocumentPaymentIntent
 import tech.dokus.features.cashflow.presentation.detail.ReviewFinancialStatus
 import tech.dokus.features.cashflow.presentation.detail.dotType
-import tech.dokus.domain.model.contact.ResolvedContact
+import tech.dokus.features.cashflow.presentation.detail.models.DocumentUiData
+import tech.dokus.features.cashflow.presentation.detail.mvi.payment.DocumentPaymentIntent
 import tech.dokus.features.cashflow.presentation.detail.overdueInlineLocalized
 import tech.dokus.features.cashflow.presentation.detail.paidHeadlineLocalized
 import tech.dokus.features.cashflow.presentation.detail.paidMethodLocalized
 import tech.dokus.features.cashflow.presentation.detail.paymentDueLocalized
 import tech.dokus.features.cashflow.presentation.detail.statusBadgeLocalized
+import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.components.DokusCardSurface
 import tech.dokus.foundation.aura.components.PButton
 import tech.dokus.foundation.aura.components.PButtonVariant
 import tech.dokus.foundation.aura.components.PIcon
 import tech.dokus.foundation.aura.components.status.StatusDot
 import tech.dokus.foundation.aura.constrains.Constraints
-import tech.dokus.foundation.app.state.DokusState
 import tech.dokus.foundation.aura.style.amberWhisper
 import tech.dokus.foundation.aura.style.greenSoft
 import tech.dokus.foundation.aura.style.redSoft
@@ -99,7 +98,9 @@ internal fun MobileAmountHeroCard(
     when (uiData) {
         is DocumentUiData.Invoice,
         is DocumentUiData.CreditNote,
-        is DocumentUiData.Receipt -> { /* continue */ }
+        is DocumentUiData.Receipt -> { /* continue */
+        }
+
         is DocumentUiData.BankStatement,
         is DocumentUiData.ProForma,
         is DocumentUiData.Quote,
@@ -161,7 +162,7 @@ internal fun MobileAmountHeroCard(
         is DocumentUiData.CreditNote -> uiData.primaryDescription
         is DocumentUiData.Receipt -> uiData.primaryDescription
     }
-    val amount = state.totalAmount?.toDisplayString() ?: "\u2014"
+    val amount = state.totalAmount?.formatAmount() ?: "\u2014"
 
     DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -202,17 +203,40 @@ internal fun MobileAmountHeroCard(
                 ) {
                     when (uiData) {
                         is DocumentUiData.Invoice -> {
-                            MobileMetaCell(label = stringResource(Res.string.mobile_label_issued), value = uiData.issueDate ?: "\u2014")
-                            MobileMetaCell(label = stringResource(Res.string.mobile_label_due), value = uiData.dueDate ?: "\u2014")
-                            MobileMetaCell(label = stringResource(Res.string.mobile_label_invoice), value = uiData.invoiceNumber ?: "\u2014")
+                            MobileMetaCell(
+                                label = stringResource(Res.string.mobile_label_issued),
+                                value = uiData.issueDate ?: "\u2014"
+                            )
+                            MobileMetaCell(
+                                label = stringResource(Res.string.mobile_label_due),
+                                value = uiData.dueDate ?: "\u2014"
+                            )
+                            MobileMetaCell(
+                                label = stringResource(Res.string.mobile_label_invoice),
+                                value = uiData.invoiceNumber ?: "\u2014"
+                            )
                         }
+
                         is DocumentUiData.CreditNote -> {
-                            MobileMetaCell(label = stringResource(Res.string.mobile_label_issued), value = uiData.issueDate ?: "\u2014")
-                            MobileMetaCell(label = stringResource(Res.string.mobile_label_invoice), value = uiData.creditNoteNumber ?: "\u2014")
+                            MobileMetaCell(
+                                label = stringResource(Res.string.mobile_label_issued),
+                                value = uiData.issueDate ?: "\u2014"
+                            )
+                            MobileMetaCell(
+                                label = stringResource(Res.string.mobile_label_invoice),
+                                value = uiData.creditNoteNumber ?: "\u2014"
+                            )
                         }
+
                         is DocumentUiData.Receipt -> {
-                            MobileMetaCell(label = stringResource(Res.string.mobile_label_issued), value = uiData.date ?: "\u2014")
-                            MobileMetaCell(label = stringResource(Res.string.mobile_label_invoice), value = uiData.receiptNumber ?: "\u2014")
+                            MobileMetaCell(
+                                label = stringResource(Res.string.mobile_label_issued),
+                                value = uiData.date ?: "\u2014"
+                            )
+                            MobileMetaCell(
+                                label = stringResource(Res.string.mobile_label_invoice),
+                                value = uiData.receiptNumber ?: "\u2014"
+                            )
                         }
                     }
                 }
@@ -227,7 +251,8 @@ internal fun MobilePaymentStateCard(
     isAccountantReadOnly: Boolean,
     onIntent: (DocumentDetailIntent) -> Unit,
 ) {
-    val autoPaymentStatus = (state.autoPaymentStatus as? DokusState.Success<*>)?.data as? AutoPaymentStatus
+    val autoPaymentStatus =
+        (state.autoPaymentStatus as? DokusState.Success<*>)?.data as? AutoPaymentStatus
     val (title, subtitle) = when (state.financialStatus) {
         ReviewFinancialStatus.Paid -> {
             state.paidHeadlineLocalized to state.paidMethodLocalized
@@ -242,7 +267,7 @@ internal fun MobilePaymentStateCard(
         ReviewFinancialStatus.Unpaid -> {
             val dueText = state.paymentDueLocalized
             stringResource(Res.string.document_payment_awaiting) to
-                (dueText ?: stringResource(Res.string.cashflow_needed_to_complete))
+                    (dueText ?: stringResource(Res.string.cashflow_needed_to_complete))
         }
 
         ReviewFinancialStatus.Review -> {
@@ -281,7 +306,11 @@ internal fun MobilePaymentStateCard(
                             color = MaterialTheme.colorScheme.surface.copy(alpha = 0.6f),
                             shape = RoundedCornerShape(12.dp),
                         )
-                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp)),
+                        .border(
+                            1.dp,
+                            MaterialTheme.colorScheme.outlineVariant,
+                            RoundedCornerShape(12.dp)
+                        ),
                     contentAlignment = Alignment.Center,
                 ) {
                     if (state.financialStatus == ReviewFinancialStatus.Paid) {
@@ -355,28 +384,42 @@ internal fun MobilePaymentStateCard(
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
-                            val confidenceText = autoPaymentStatus.confidenceScore
-                                ?.let { score -> "${(score * 100).toInt()}%" }
-                                ?: "\u2014"
+                            val confidenceText =
+                                autoPaymentStatus.confidenceScore.let { score -> "${(score * 100).toInt()}%" }
                             Text(
-                                text = stringResource(Res.string.payment_confidence, confidenceText),
+                                text = stringResource(
+                                    Res.string.payment_confidence,
+                                    confidenceText
+                                ),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.textMuted,
                             )
                             if (autoPaymentStatus.reasons.isNotEmpty()) {
                                 Text(
-                                    text = autoPaymentStatus.reasons.joinToString(", ") { formatMatchReason(it) },
+                                    text = autoPaymentStatus.reasons.joinToString(", ") {
+                                        formatMatchReason(
+                                            it
+                                        )
+                                    },
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.textMuted,
                                 )
                             }
                             if (autoPaymentStatus.canUndo) {
                                 PButton(
-                                    text = if (state.isUndoingAutoPayment) stringResource(Res.string.payment_undoing) else stringResource(Res.string.payment_undo_auto),
+                                    text = if (state.isUndoingAutoPayment) stringResource(Res.string.payment_undoing) else stringResource(
+                                        Res.string.payment_undo_auto
+                                    ),
                                     variant = PButtonVariant.OutlineMuted,
                                     isEnabled = !state.isUndoingAutoPayment,
                                     modifier = Modifier.fillMaxWidth(),
-                                    onClick = { onIntent(DocumentDetailIntent.Payment(DocumentPaymentIntent.UndoAutoPayment())) },
+                                    onClick = {
+                                        onIntent(
+                                            DocumentDetailIntent.Payment(
+                                                DocumentPaymentIntent.UndoAutoPayment()
+                                            )
+                                        )
+                                    },
                                 )
                             }
                         }

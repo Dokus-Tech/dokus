@@ -32,6 +32,7 @@ import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.TenantId
@@ -116,8 +117,8 @@ class SearchPersonalizationQueries {
                 }
                 adjustSelect { select(amountSum) }
             }
-            val sum = query.firstOrNull()?.get(amountSum) ?: return Money.ZERO
-            return Money.fromDbDecimal(sum)
+            val sum = query.firstOrNull()?.get(amountSum) ?: return Money.zero(Currency.Eur)
+            return Money.fromDbDecimal(sum, Currency.Eur)
         }
 
         val total = sumForDirection(null)
