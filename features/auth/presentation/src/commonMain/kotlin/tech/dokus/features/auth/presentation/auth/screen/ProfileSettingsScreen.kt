@@ -209,66 +209,80 @@ fun ProfileSettingsContent(
                 exception = if (state.user is DokusState.Error) state.user.exception else null,
                 retryHandler = if (state.user is DokusState.Error) state.user.retryHandler else null,
             ) {
-            when {
-                state.isSaving && state.user.isSuccess() -> {
-                    ProfileSavingSection(
-                        email = state.user.data.email.value,
-                        editFirstName = state.editFirstName,
-                        editLastName = state.editLastName,
-                    )
-                }
+                Column(verticalArrangement = Arrangement.spacedBy(SectionSpacing)) {
+                    when {
+                        state.isSaving && state.user.isSuccess() -> {
+                            ProfileSavingSection(
+                                email = state.user.data.email.value,
+                                editFirstName = state.editFirstName,
+                                editLastName = state.editLastName,
+                            )
+                        }
 
-                state.isEditing && state.user.isSuccess() -> {
-                    ProfileEditingSection(
-                        email = state.user.data.email.value,
-                        editFirstName = state.editFirstName,
-                        editLastName = state.editLastName,
-                        canSave = state.canSave,
-                        onFirstNameChange = { onIntent(ProfileSettingsIntent.UpdateFirstName(it)) },
-                        onLastNameChange = { onIntent(ProfileSettingsIntent.UpdateLastName(it)) },
-                        onSave = { onIntent(ProfileSettingsIntent.SaveClicked) },
-                        onCancel = { onIntent(ProfileSettingsIntent.CancelEditing) },
-                    )
-                }
+                        state.isEditing && state.user.isSuccess() -> {
+                            ProfileEditingSection(
+                                email = state.user.data.email.value,
+                                editFirstName = state.editFirstName,
+                                editLastName = state.editLastName,
+                                canSave = state.canSave,
+                                onFirstNameChange = {
+                                    onIntent(
+                                        ProfileSettingsIntent.UpdateFirstName(
+                                            it
+                                        )
+                                    )
+                                },
+                                onLastNameChange = {
+                                    onIntent(
+                                        ProfileSettingsIntent.UpdateLastName(
+                                            it
+                                        )
+                                    )
+                                },
+                                onSave = { onIntent(ProfileSettingsIntent.SaveClicked) },
+                                onCancel = { onIntent(ProfileSettingsIntent.CancelEditing) },
+                            )
+                        }
 
-                state.user.isSuccess() -> {
-                    val user = state.user.data
-                    ProfileHero(
-                        user = user,
-                        avatarState = state.avatarState,
-                        onUploadAvatar = { avatarPicker.launch() },
-                        onResetAvatarState = { onIntent(ProfileSettingsIntent.ResetAvatarState) },
-                    )
-                    AccountCard(
-                        user = user,
-                        isResendingVerification = state.isResendingVerification,
-                        onResendVerification = onResendVerification,
-                        onEditClick = { onIntent(ProfileSettingsIntent.StartEditing) },
-                    )
-                }
+                        state.user.isSuccess() -> {
+                            val user = state.user.data
+                            ProfileHero(
+                                user = user,
+                                avatarState = state.avatarState,
+                                onUploadAvatar = { avatarPicker.launch() },
+                                onResetAvatarState = { onIntent(ProfileSettingsIntent.ResetAvatarState) },
+                            )
+                            AccountCard(
+                                user = user,
+                                isResendingVerification = state.isResendingVerification,
+                                onResendVerification = onResendVerification,
+                                onEditClick = { onIntent(ProfileSettingsIntent.StartEditing) },
+                            )
+                        }
 
-                else -> {
-                    val now = LocalDateTime(2026, 1, 1, 0, 0)
-                    val emptyUser = User(
-                        id = UserId.generate(),
-                        email = Email(""),
-                        createdAt = now,
-                        updatedAt = now,
-                    )
-                    ProfileHero(
-                        user = emptyUser,
-                        avatarState = AvatarState.Idle,
-                        onUploadAvatar = {},
-                        onResetAvatarState = {},
-                    )
-                    AccountCard(
-                        user = emptyUser,
-                        isResendingVerification = false,
-                        onResendVerification = {},
-                        onEditClick = {},
-                    )
+                        else -> {
+                            val now = LocalDateTime(2026, 1, 1, 0, 0)
+                            val emptyUser = User(
+                                id = UserId.generate(),
+                                email = Email(""),
+                                createdAt = now,
+                                updatedAt = now,
+                            )
+                            ProfileHero(
+                                user = emptyUser,
+                                avatarState = AvatarState.Idle,
+                                onUploadAvatar = {},
+                                onResetAvatarState = {},
+                            )
+                            AccountCard(
+                                user = emptyUser,
+                                isResendingVerification = false,
+                                onResendVerification = {},
+                                onEditClick = {},
+                            )
+                        }
+                    }
                 }
-            }
             }
 
             // Independent sections -- always visible regardless of state
