@@ -97,7 +97,7 @@ class InvoiceRepository(
                         item.lineTotal.toDbDecimal() + item.vatAmount.toDbDecimal()
                     }
                 it[paidAmount] = BigDecimal.ZERO
-                it[status] = InvoiceStatus.Draft
+                it[status] = if (request.documentId != null) InvoiceStatus.Sent else InvoiceStatus.Draft
                 it[InvoicesTable.direction] = request.direction
                 it[notes] = request.notes
                 it[documentId] = request.documentId?.let { docId -> UUID.fromString(docId.toString()) }
