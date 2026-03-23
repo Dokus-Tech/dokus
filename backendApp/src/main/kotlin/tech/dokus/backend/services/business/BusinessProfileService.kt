@@ -6,9 +6,9 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import tech.dokus.backend.services.avatar.buildVersionedAvatarThumbnail
+import tech.dokus.database.entity.BusinessProfileEntity
 import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.business.BusinessProfileEnrichmentJobRepository
-import tech.dokus.database.entity.BusinessProfileEntity
 import tech.dokus.database.repository.business.BusinessProfileRepository
 import tech.dokus.domain.enums.BusinessProfileSubjectType
 import tech.dokus.domain.enums.BusinessProfileVerificationState
@@ -164,7 +164,13 @@ class BusinessProfileService(
         val websiteChanged = !request.websiteUrl.isNullOrBlank() && request.websiteUrl != existingUrl
         if (websiteChanged) {
             enqueueContact(tenantId, contactId, EnrichmentTrigger.WebsiteChanged)
-                .onFailure { logger.warn("Failed to enqueue enrichment after website change for contact {}: {}", contactId, it.message) }
+                .onFailure {
+                    logger.warn(
+                        "Failed to enqueue enrichment after website change for contact {}: {}",
+                        contactId,
+                        it.message
+                    )
+                }
         }
         return response
     }

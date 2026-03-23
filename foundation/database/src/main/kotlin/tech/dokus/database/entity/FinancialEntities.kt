@@ -40,7 +40,7 @@ data class InvoiceEntity(
     val subtotalAmount: Money,
     val vatAmount: Money,
     val totalAmount: Money,
-    val paidAmount: Money = Money.ZERO,
+    val paidAmount: Money = Money.zero(Currency.Eur),
     val status: InvoiceStatus,
     val currency: Currency = Currency.Eur,
     val notes: String? = null,

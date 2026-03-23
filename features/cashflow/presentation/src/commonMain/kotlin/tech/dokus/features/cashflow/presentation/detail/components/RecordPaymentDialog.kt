@@ -307,7 +307,7 @@ private fun PaymentTransactionSection(
                 text = stringResource(
                     Res.string.payment_transaction_date_amount,
                     selected.transactionDate.toString(),
-                    selected.signedAmount.toDisplayString(),
+                    selected.signedAmount.formatAmount(),
                 ),
                 style = MaterialTheme.typography.bodySmall,
             )
@@ -358,7 +358,7 @@ private fun PaymentTransactionSection(
                 LazyColumn(modifier = Modifier.heightIn(max = 200.dp)) {
                     items(sheetState.selectableTransactions) { transaction ->
                         PButton(
-                            text = "${transaction.transactionDate} \u2022 ${transaction.signedAmount.toDisplayString()} \u2022 " +
+                            text = "${transaction.transactionDate} \u2022 ${transaction.signedAmount.formatAmount()} \u2022 " +
                                 (transaction.counterparty.name ?: stringResource(Res.string.common_unknown)),
                             variant = PButtonVariant.Outline,
                             modifier = Modifier.fillMaxWidth(),

@@ -2,6 +2,7 @@ package tech.dokus.features.ai.validation
 
 import kotlinx.datetime.LocalDate
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -15,8 +16,8 @@ class BelgianVatRateValidatorTest {
 
     @Test
     fun `verify passes for 21 percent standard rate`() {
-        val subtotal = Money.parse("100.00")
-        val vatAmount = Money.parse("21.00")
+        val subtotal = Money.parse("100.00", Currency.Eur)
+        val vatAmount = Money.parse("21.00", Currency.Eur)
 
         val result = BelgianVatRateValidator.verify(subtotal, vatAmount, null, null)
 
@@ -27,8 +28,8 @@ class BelgianVatRateValidatorTest {
 
     @Test
     fun `verify passes for 6 percent reduced rate`() {
-        val subtotal = Money.parse("100.00")
-        val vatAmount = Money.parse("6.00")
+        val subtotal = Money.parse("100.00", Currency.Eur)
+        val vatAmount = Money.parse("6.00", Currency.Eur)
 
         val result = BelgianVatRateValidator.verify(subtotal, vatAmount, null, null)
 
@@ -38,8 +39,8 @@ class BelgianVatRateValidatorTest {
 
     @Test
     fun `verify passes for 12 percent intermediate rate`() {
-        val subtotal = Money.parse("100.00")
-        val vatAmount = Money.parse("12.00")
+        val subtotal = Money.parse("100.00", Currency.Eur)
+        val vatAmount = Money.parse("12.00", Currency.Eur)
 
         val result = BelgianVatRateValidator.verify(subtotal, vatAmount, null, null)
 
@@ -49,8 +50,8 @@ class BelgianVatRateValidatorTest {
 
     @Test
     fun `verify passes for 0 percent exempt rate`() {
-        val subtotal = Money.parse("100.00")
-        val vatAmount = Money.parse("0.00")
+        val subtotal = Money.parse("100.00", Currency.Eur)
+        val vatAmount = Money.parse("0.00", Currency.Eur)
 
         val result = BelgianVatRateValidator.verify(subtotal, vatAmount, null, null)
 
@@ -64,8 +65,8 @@ class BelgianVatRateValidatorTest {
 
     @Test
     fun `verify passes within 0_5 percent tolerance`() {
-        val subtotal = Money.parse("100.00")
-        val vatAmount = Money.parse("20.50") // ~20.5%, within 0.5% of 21%
+        val subtotal = Money.parse("100.00", Currency.Eur)
+        val vatAmount = Money.parse("20.50", Currency.Eur) // ~20.5%, within 0.5% of 21%
 
         val result = BelgianVatRateValidator.verify(subtotal, vatAmount, null, null)
 
@@ -74,8 +75,8 @@ class BelgianVatRateValidatorTest {
 
     @Test
     fun `verify warns for unusual rate outside tolerance`() {
-        val subtotal = Money.parse("100.00")
-        val vatAmount = Money.parse("15.00") // 15% - not a Belgian rate
+        val subtotal = Money.parse("100.00", Currency.Eur)
+        val vatAmount = Money.parse("15.00", Currency.Eur) // 15% - not a Belgian rate
 
         val result = BelgianVatRateValidator.verify(subtotal, vatAmount, null, null)
 
@@ -91,8 +92,8 @@ class BelgianVatRateValidatorTest {
 
     @Test
     fun `verify 12 percent for restaurant category post March 2026`() {
-        val subtotal = Money.parse("100.00")
-        val vatAmount = Money.parse("12.00")
+        val subtotal = Money.parse("100.00", Currency.Eur)
+        val vatAmount = Money.parse("12.00", Currency.Eur)
         val postReformDate = LocalDate(2026, 4, 1) // After March 2026
 
         val result = BelgianVatRateValidator.verify(subtotal, vatAmount, postReformDate, "RESTAURANT")
@@ -104,8 +105,8 @@ class BelgianVatRateValidatorTest {
 
     @Test
     fun `verify 12 percent for hotel category post March 2026`() {
-        val subtotal = Money.parse("100.00")
-        val vatAmount = Money.parse("12.00")
+        val subtotal = Money.parse("100.00", Currency.Eur)
+        val vatAmount = Money.parse("12.00", Currency.Eur)
         val postReformDate = LocalDate(2026, 5, 15)
 
         val result = BelgianVatRateValidator.verify(subtotal, vatAmount, postReformDate, "Hotel accommodation")
@@ -116,8 +117,8 @@ class BelgianVatRateValidatorTest {
 
     @Test
     fun `verify 12 percent for cafe pre March 2026 notes food only`() {
-        val subtotal = Money.parse("100.00")
-        val vatAmount = Money.parse("12.00")
+        val subtotal = Money.parse("100.00", Currency.Eur)
+        val vatAmount = Money.parse("12.00", Currency.Eur)
         val preReformDate = LocalDate(2025, 12, 1) // Before March 2026
 
         val result = BelgianVatRateValidator.verify(subtotal, vatAmount, preReformDate, "CAFE")
@@ -129,8 +130,8 @@ class BelgianVatRateValidatorTest {
 
     @Test
     fun `verify 12 percent for non-Horeca category`() {
-        val subtotal = Money.parse("100.00")
-        val vatAmount = Money.parse("12.00")
+        val subtotal = Money.parse("100.00", Currency.Eur)
+        val vatAmount = Money.parse("12.00", Currency.Eur)
 
         val result = BelgianVatRateValidator.verify(subtotal, vatAmount, null, "CONSTRUCTION")
 
@@ -144,7 +145,7 @@ class BelgianVatRateValidatorTest {
 
     @Test
     fun `verify returns incomplete when subtotal is null`() {
-        val result = BelgianVatRateValidator.verify(null, Money.parse("21.00"), null, null)
+        val result = BelgianVatRateValidator.verify(null, Money.parse("21.00", Currency.Eur), null, null)
 
         assertTrue(result.passed)
         assertEquals(Severity.INFO, result.severity)
@@ -153,7 +154,7 @@ class BelgianVatRateValidatorTest {
 
     @Test
     fun `verify returns incomplete when subtotal is zero`() {
-        val result = BelgianVatRateValidator.verify(Money.parse("0.00"), Money.parse("0.00"), null, null)
+        val result = BelgianVatRateValidator.verify(Money.parse("0.00", Currency.Eur), Money.parse("0.00", Currency.Eur), null, null)
 
         assertTrue(result.passed)
         assertTrue(result.message.contains("zero"))

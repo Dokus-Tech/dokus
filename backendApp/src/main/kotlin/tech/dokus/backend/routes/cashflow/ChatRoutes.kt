@@ -19,6 +19,7 @@ import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.ai.ChatCitationDto
 import tech.dokus.domain.model.ai.ChatConfiguration
+import tech.dokus.domain.model.ai.ChatContentBlock
 import tech.dokus.domain.model.ai.ChatHistoryResponse
 import tech.dokus.domain.model.ai.ChatMessageDto
 import tech.dokus.domain.model.ai.ChatMessageId
@@ -32,7 +33,6 @@ import tech.dokus.domain.model.ai.MessageRole
 import tech.dokus.domain.repository.ChatRepository
 import tech.dokus.domain.routes.Chat
 import tech.dokus.domain.routes.Documents
-import tech.dokus.domain.model.ai.ChatContentBlock
 import tech.dokus.features.ai.agents.ChatAgent
 import tech.dokus.features.ai.agents.ChatResponseParser
 import tech.dokus.features.ai.agents.ConversationMessage

@@ -28,6 +28,7 @@ import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.DocumentStatus
@@ -237,8 +238,8 @@ class SearchRepository(
             }
             adjustSelect { select(amountSum) }
         }
-        val sum = query.firstOrNull()?.get(amountSum) ?: return Money.ZERO
-        return Money.fromDbDecimal(sum)
+        val sum = query.firstOrNull()?.get(amountSum) ?: return Money.zero(Currency.Eur)
+        return Money.fromDbDecimal(sum, Currency.Eur)
     }
 
     private fun documentQuery(tenantId: TenantId, pattern: String, amountDecimal: BigDecimal? = null): Query {

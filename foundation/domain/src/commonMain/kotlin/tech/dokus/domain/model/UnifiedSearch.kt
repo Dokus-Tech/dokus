@@ -4,6 +4,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.serialization.Serializable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
@@ -98,9 +99,9 @@ data class SearchSuggestionDto(
 
 @Serializable
 data class SearchAggregatesDto(
-    val transactionTotal: Money = Money.ZERO,
-    val incomingTotal: Money = Money.ZERO,
-    val outgoingTotal: Money = Money.ZERO,
+    val transactionTotal: Money = Money.zero(Currency.Eur),
+    val incomingTotal: Money = Money.zero(Currency.Eur),
+    val outgoingTotal: Money = Money.zero(Currency.Eur),
 )
 
 @Serializable

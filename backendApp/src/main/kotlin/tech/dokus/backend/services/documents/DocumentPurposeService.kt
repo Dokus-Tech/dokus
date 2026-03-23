@@ -1,11 +1,10 @@
 package tech.dokus.backend.services.documents
 
 import kotlinx.datetime.LocalDate
+import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.database.repository.cashflow.DocumentPurposeTemplateRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.database.repository.drafts.DraftRepository
-import tech.dokus.domain.model.from
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.DocumentStatus
@@ -68,11 +67,11 @@ import tech.dokus.domain.model.VatAssessmentDraftData
 import tech.dokus.domain.model.VatListingDraftData
 import tech.dokus.domain.model.VatReturnDraftData
 import tech.dokus.domain.model.WithholdingTaxDraftData
+import tech.dokus.domain.model.contact.isLinked
+import tech.dokus.domain.model.from
 import tech.dokus.domain.model.resolvedCounterpartyName
 import tech.dokus.domain.model.resolvedCounterpartyVat
 import tech.dokus.domain.model.toDocumentType
-import tech.dokus.domain.model.contact.CounterpartyInfo
-import tech.dokus.domain.model.contact.isLinked
 import tech.dokus.features.ai.agents.DocumentProcessingAgent
 import tech.dokus.features.ai.models.PurposeEnrichmentInput
 import tech.dokus.foundation.backend.utils.loggerFor
@@ -650,5 +649,4 @@ class DocumentPurposeService(
         12 -> "December"
         else -> "Month"
     }
-
 }

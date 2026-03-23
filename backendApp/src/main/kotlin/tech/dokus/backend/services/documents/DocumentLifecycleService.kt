@@ -1,5 +1,7 @@
 package tech.dokus.backend.services.documents
 
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import tech.dokus.backend.routes.cashflow.documents.ConfirmedBankStatement
 import tech.dokus.backend.routes.cashflow.documents.confirmedEntityToDocDto
 import tech.dokus.backend.routes.cashflow.documents.updateDraftCounterparty
@@ -33,6 +35,7 @@ import tech.dokus.domain.ids.DocumentSourceId
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.domain.ids.UserId
 import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.RejectDocumentRequest
 import tech.dokus.domain.model.ReprocessRequest
 import tech.dokus.domain.model.ReprocessResponse
@@ -43,14 +46,11 @@ import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CreateContactRequest
 import tech.dokus.domain.model.contact.isLinked
 import tech.dokus.domain.model.contact.isUnresolved
-import tech.dokus.domain.model.DocumentDraftData
 import tech.dokus.domain.model.from
 import tech.dokus.domain.model.toDocumentType
 import tech.dokus.foundation.backend.storage.DocumentStorageService
 import tech.dokus.foundation.backend.utils.loggerFor
 import kotlin.time.Clock
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 
 /**
  * Service for document lifecycle operations: confirm, unconfirm, reject, delete,
@@ -192,7 +192,9 @@ internal class DocumentLifecycleService(
                 ) {
                     logger.warn(
                         "Detected paid invoice without paidAt during confirm-path reconciliation: tenant={}, document={}, invoice={}",
-                        tenantId, documentId, confirmedEntity.id
+                        tenantId,
+                        documentId,
+                        confirmedEntity.id
                     )
                 }
 
@@ -278,7 +280,10 @@ internal class DocumentLifecycleService(
 
         // Confirm: creates entity + cashflow entry + marks draft confirmed
         val confirmationResult = confirmationDispatcher.confirm(
-            tenantId, documentId, draftData, linkedContactId
+            tenantId,
+            documentId,
+            draftData,
+            linkedContactId
         ).getOrThrow()
 
         val entryId = confirmationResult.cashflowEntryId
@@ -296,7 +301,9 @@ internal class DocumentLifecycleService(
             }.onFailure {
                 logger.warn(
                     "Invoice-bank automation failed after confirmation for tenant={}, document={}: {}",
-                    tenantId, documentId, it.message
+                    tenantId,
+                    documentId,
+                    it.message
                 )
             }
         }
@@ -337,7 +344,9 @@ internal class DocumentLifecycleService(
         if (cashflowSource != null) {
             val (sourceType, sourceIdStr) = cashflowSource
             val entry = cashflowEntriesRepository.getBySource(
-                tenantId, sourceType, java.util.UUID.fromString(sourceIdStr)
+                tenantId,
+                sourceType,
+                java.util.UUID.fromString(sourceIdStr)
             ).getOrNull()
             if (entry != null && entry.paidAt != null) {
                 throw DokusException.BadRequest("Cannot unconfirm: document has recorded payments")
@@ -355,7 +364,9 @@ internal class DocumentLifecycleService(
         if (cashflowSource != null) {
             val (sourceType, sourceIdStr) = cashflowSource
             cashflowEntriesRepository.deleteBySource(
-                tenantId, sourceType, java.util.UUID.fromString(sourceIdStr)
+                tenantId,
+                sourceType,
+                java.util.UUID.fromString(sourceIdStr)
             )
         }
 
@@ -363,7 +374,10 @@ internal class DocumentLifecycleService(
         when (confirmedEntity) {
             is InvoiceEntity -> invoiceRepository.deleteInvoice(confirmedEntity.id, tenantId)
             is tech.dokus.database.entity.ExpenseEntity -> expenseRepository.deleteExpense(confirmedEntity.id, tenantId)
-            is tech.dokus.database.entity.CreditNoteEntity -> creditNoteRepository.deleteCreditNote(confirmedEntity.id, tenantId)
+            is tech.dokus.database.entity.CreditNoteEntity -> creditNoteRepository.deleteCreditNote(
+                confirmedEntity.id,
+                tenantId
+            )
             is ConfirmedBankStatement -> {
                 bankTransactionRepository.deleteByDocument(tenantId, documentId)
                 bankStatementRepository.deleteByDocumentId(tenantId, documentId)

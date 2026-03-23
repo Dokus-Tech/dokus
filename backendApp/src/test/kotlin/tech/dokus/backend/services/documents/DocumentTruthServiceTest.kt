@@ -21,6 +21,7 @@ import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.domain.model.DocDto
 import tech.dokus.domain.model.from
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
@@ -454,7 +455,7 @@ class DocumentTruthServiceTest {
     ) = InvoiceDraftData(
         direction = DocumentDirection.Inbound,
         invoiceNumber = invoiceNumber,
-        totalAmount = Money(totalMinor),
+        totalAmount = Money(totalMinor, Currency.Eur),
         seller = PartyDraftDto(
             name = "Supplier Inc",
             vat = VatNumber.from("BE0777887045")

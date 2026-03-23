@@ -203,7 +203,7 @@ class PeppolValidator {
         invoice: InvoiceEntity,
         errors: MutableList<PeppolValidationError>
     ) {
-        val computedSubtotal = Money(invoice.items.sumOf { it.lineTotal.minor })
+        val computedSubtotal = Money(invoice.items.sumOf { it.lineTotal.minor }, invoice.currency)
         if (computedSubtotal != invoice.subtotalAmount) {
             errors.add(
                 PeppolValidationError(
@@ -214,7 +214,7 @@ class PeppolValidator {
             )
         }
 
-        val computedVat = Money(invoice.items.sumOf { it.vatAmount.minor })
+        val computedVat = Money(invoice.items.sumOf { it.vatAmount.minor }, invoice.currency)
         if (computedVat != invoice.vatAmount) {
             errors.add(
                 PeppolValidationError(

@@ -13,8 +13,8 @@ import tech.dokus.backend.services.auth.AuthService
 import tech.dokus.backend.services.auth.SessionContext
 import tech.dokus.domain.DeviceType
 import tech.dokus.domain.model.auth.LoginRequest
-import tech.dokus.domain.model.auth.RefreshTokenRequest
 import tech.dokus.domain.model.auth.PasswordResetRequest
+import tech.dokus.domain.model.auth.RefreshTokenRequest
 import tech.dokus.domain.model.auth.RegisterRequest
 import tech.dokus.domain.model.auth.ResetPasswordRequest
 import tech.dokus.domain.routes.Identity

@@ -6,6 +6,7 @@ import tech.dokus.backend.mappers.from
 import tech.dokus.database.entity.InvoiceEntity
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
+import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.DocumentDirection
@@ -66,7 +67,10 @@ class InvoiceService(
     ): Result<PaginatedResponse<DocDto.Invoice.Confirmed>> {
         logger.debug(
             "Listing invoices for tenant: {} (status={}, limit={}, offset={})",
-            tenantId, status, limit, offset
+            tenantId,
+            status,
+            limit,
+            offset
         )
         return invoiceRepository.listInvoices(
             tenantId = tenantId,
@@ -182,14 +186,16 @@ class InvoiceService(
         ).getOrNull() ?: return@runCatching
 
         val remaining = update.totalAmount - update.paidAmount
-        val newRemaining = if (remaining.isNegative) tech.dokus.domain.Money.ZERO else remaining
+        val newRemaining = if (remaining.isNegative) Money.zero(remaining.currency) else remaining
         val newStatus = if (newRemaining.minor <= 0) CashflowEntryStatus.Paid else entry.status
         val paidAt = if (newStatus == CashflowEntryStatus.Paid && entry.status != CashflowEntryStatus.Paid) {
             LocalDateTime(
                 request.paymentDate.year,
                 request.paymentDate.monthNumber,
                 request.paymentDate.dayOfMonth,
-                12, 0, 0
+                12,
+                0,
+                0
             )
         } else {
             entry.paidAt

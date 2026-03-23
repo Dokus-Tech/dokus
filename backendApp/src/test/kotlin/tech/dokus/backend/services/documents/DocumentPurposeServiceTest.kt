@@ -13,6 +13,7 @@ import tech.dokus.database.entity.DocumentPurposeTemplateEntity
 import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.ContactLinkSource
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentPurposeSource
 import tech.dokus.domain.enums.PurposePeriodMode
@@ -246,7 +247,7 @@ class DocumentPurposeServiceTest {
             issueDate = LocalDate(2026, 2, 15),
             seller = PartyDraftDto(name = supplierName, vat = supplierVat),
             buyer = PartyDraftDto(name = "Dokus"),
-            totalAmount = Money.from("100.00"),
+            totalAmount = Money.from("100.00", Currency.Eur),
             notes = notes
         )
     }

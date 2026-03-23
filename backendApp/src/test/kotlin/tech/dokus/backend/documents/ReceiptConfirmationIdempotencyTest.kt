@@ -119,7 +119,7 @@ class ReceiptConfirmationIdempotencyTest {
 
     @Test
     fun `confirming the same receipt twice is idempotent (no duplicates)`() = runBlocking {
-        val (documentId, draftData) = createReceiptDocument(draftAmount = Money.from("18.48")!!)
+        val (documentId, draftData) = createReceiptDocument(draftAmount = Money.from("18.48", Currency.Eur)!!)
 
         val first = confirmationService.confirm(tenantId, documentId, draftData, contactId = null).getOrThrow()
         val second = confirmationService.confirm(tenantId, documentId, draftData, contactId = null).getOrThrow()
@@ -138,7 +138,7 @@ class ReceiptConfirmationIdempotencyTest {
 
     @Test
     fun `edit confirmed draft then reconfirm updates expense and cashflow entry`() = runBlocking {
-        val (documentId, originalDraft) = createReceiptDocument(draftAmount = Money.from("18.48")!!)
+        val (documentId, originalDraft) = createReceiptDocument(draftAmount = Money.from("18.48", Currency.Eur)!!)
 
         val confirmed = confirmationService.confirm(tenantId, documentId, originalDraft, contactId = null).getOrThrow()
         val originalEntryId = confirmed.cashflowEntryId
@@ -148,8 +148,8 @@ class ReceiptConfirmationIdempotencyTest {
 
         val updatedDraft = originalDraft.copy(
             merchantName = "Updated Merchant",
-            totalAmount = Money.from("25.00")!!,
-            vatAmount = Money.from("4.34")!!,
+            totalAmount = Money.from("25.00", Currency.Eur)!!,
+            vatAmount = Money.from("4.34", Currency.Eur)!!,
             date = LocalDate(2024, 2, 1),
             currency = Currency.Eur
         )
@@ -170,11 +170,11 @@ class ReceiptConfirmationIdempotencyTest {
         val updatedExpense = expenseRepository.findByDocumentId(tenantId, documentId)
         assertNotNull(updatedExpense)
         assertEquals("Updated Merchant", updatedExpense.merchant)
-        assertEquals(Money.from("25.00")!!, updatedExpense.amount)
+        assertEquals(Money.from("25.00", Currency.Eur)!!, updatedExpense.amount)
 
         val updatedEntry = cashflowEntriesRepository.getByDocumentId(tenantId, documentId).getOrThrow()
         assertNotNull(updatedEntry)
-        assertEquals(Money.from("25.00")!!, updatedEntry.amountGross)
+        assertEquals(Money.from("25.00", Currency.Eur)!!, updatedEntry.amountGross)
         assertEquals(CashflowEntryStatus.Open, updatedEntry.status)
 
         val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
@@ -195,7 +195,7 @@ class ReceiptConfirmationIdempotencyTest {
             date = LocalDate(2024, 1, 1),
             currency = Currency.Eur,
             totalAmount = draftAmount,
-            vatAmount = Money.from("3.20")
+            vatAmount = Money.from("3.20", Currency.Eur)
         )
 
         val created = documentRepository.createOrUpdateFromIngestion(

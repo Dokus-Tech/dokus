@@ -1,27 +1,27 @@
 package tech.dokus.backend.services.cashflow.matching
 
-import tech.dokus.database.repository.auth.TenantRepository
-import tech.dokus.database.repository.cashflow.matching.MatchingRepository
 import kotlinx.serialization.json.Json
+import tech.dokus.backend.mappers.from
+import tech.dokus.backend.services.banking.sse.BankingSsePublisher
+import tech.dokus.backend.services.cashflow.AutoPaymentService
+import tech.dokus.database.entity.BankTransactionEntity
+import tech.dokus.database.entity.CashflowEntryEntity
+import tech.dokus.database.mapper.from
+import tech.dokus.database.repository.auth.TenantRepository
 import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
+import tech.dokus.database.repository.cashflow.matching.MatchingRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.domain.enums.AutoPaymentTriggerSource
 import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.CashflowDirection
-import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.MatchedBy
 import tech.dokus.domain.enums.ResolutionType
+import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.backend.mappers.from
-import tech.dokus.database.mapper.from
-import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.domain.model.BankTransactionDto
-import tech.dokus.database.entity.CashflowEntryEntity
-import tech.dokus.backend.services.banking.sse.BankingSsePublisher
-import tech.dokus.backend.services.cashflow.AutoPaymentService
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.foundation.backend.utils.runSuspendCatching
 import java.util.UUID
@@ -237,7 +237,9 @@ class MatchingEngine(
         }.onFailure { e ->
             logger.warn(
                 "Auto-payment failed for tx {} → entry {}: {}",
-                best.transaction.id, best.entryId, e.message,
+                best.transaction.id,
+                best.entryId,
+                e.message,
             )
         }
 
@@ -245,7 +247,11 @@ class MatchingEngine(
 
         logger.info(
             "Auto-matched tx {} → entry {} (score={}, margin={}, signals={})",
-            best.transaction.id, best.entryId, "%.4f".format(best.score), "%.4f".format(margin), best.evidenceStrings,
+            best.transaction.id,
+            best.entryId,
+            "%.4f".format(best.score),
+            "%.4f".format(margin),
+            best.evidenceStrings,
         )
     }
 
@@ -262,7 +268,10 @@ class MatchingEngine(
 
         logger.debug(
             "Needs-review tx {} → entry {} (score={}, signals={})",
-            best.transaction.id, best.entryId, "%.4f".format(best.score), best.evidenceStrings,
+            best.transaction.id,
+            best.entryId,
+            "%.4f".format(best.score),
+            best.evidenceStrings,
         )
     }
 
@@ -295,7 +304,10 @@ class MatchingEngine(
 
         logger.info(
             "Auto-transfer: {} ↔ {} (pairId={}, dest={})",
-            tx.id, result.counterpartTransactionId, pairId, result.destinationAccountId,
+            tx.id,
+            result.counterpartTransactionId,
+            pairId,
+            result.destinationAccountId,
         )
     }
 
@@ -316,7 +328,9 @@ class MatchingEngine(
 
         logger.info(
             "Likely transfer (one-sided): {} → account {} ({})",
-            tx.id, result.destinationAccountId, result.reason,
+            tx.id,
+            result.destinationAccountId,
+            result.reason,
         )
     }
 }

@@ -1,13 +1,22 @@
 package tech.dokus.backend.services.banking
 
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.minus
+import kotlinx.datetime.plus
+import kotlinx.datetime.todayIn
+import tech.dokus.backend.mappers.from
 import tech.dokus.backend.services.banking.sse.BankingSsePublisher
 import tech.dokus.backend.services.cashflow.ExpenseService
 import tech.dokus.backend.services.cashflow.matching.MatchFeedbackStore
-import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.banking.BankAccountRepository
+import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.ExpenseCategory
 import tech.dokus.domain.enums.IgnoredReason
 import tech.dokus.domain.enums.MatchedBy
@@ -16,26 +25,18 @@ import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.backend.mappers.from
 import tech.dokus.domain.model.AccountBalanceSeriesDto
+import tech.dokus.domain.model.BalanceHistoryPointDto
+import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.domain.model.BankAccountDto
 import tech.dokus.domain.model.BankAccountSummaryDto
 import tech.dokus.domain.model.BankTransactionDto
 import tech.dokus.domain.model.BankTransactionSummaryDto
-import tech.dokus.domain.model.BalanceHistoryPointDto
-import tech.dokus.domain.model.BalanceHistoryResponse
 import tech.dokus.domain.model.CreateExpenseRequest
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.foundation.backend.utils.runSuspendCatching
 import kotlin.math.abs
 import kotlin.uuid.ExperimentalUuidApi
-import kotlinx.datetime.Clock
-import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.minus
-import kotlinx.datetime.plus
-import kotlinx.datetime.todayIn
 
 class BankingService(
     private val bankTransactionRepository: BankTransactionRepository,
@@ -57,12 +58,13 @@ class BankingService(
 
         val totalBalanceMinor = accounts.mapNotNull { it.balance?.minor }.sum()
         val lastSynced = accounts.mapNotNull { it.balanceUpdatedAt }.maxOrNull()
+        val summaryCurrency = accounts.firstOrNull()?.currency ?: Currency.Eur
 
         BankAccountSummaryDto(
-            totalBalance = Money(totalBalanceMinor),
+            totalBalance = Money(totalBalanceMinor, summaryCurrency),
             accountCount = accounts.size,
             unmatchedCount = counts.unmatched + counts.needsReview,
-            totalUnresolvedAmount = Money(unresolvedMinor),
+            totalUnresolvedAmount = Money(unresolvedMinor, summaryCurrency),
             matchedThisPeriod = counts.matched,
             lastSyncedAt = lastSynced,
         )
@@ -111,7 +113,7 @@ class BankingService(
             matchedCount = counts.matched,
             ignoredCount = counts.ignored,
             totalCount = counts.unmatched + counts.needsReview + counts.matched + counts.ignored,
-            totalUnresolvedAmount = Money(unresolvedMinor)
+            totalUnresolvedAmount = Money(unresolvedMinor, Currency.Eur)
         )
     }
 
@@ -129,7 +131,14 @@ class BankingService(
         transactionId: BankTransactionId,
         cashflowEntryId: CashflowEntryId
     ): Result<BankTransactionDto> = runSuspendCatching {
-        val result = updateAndRefetch(tenantId, transactionId, "Linked transaction {} to entry {} for tenant {}", transactionId, cashflowEntryId, tenantId) {
+        val result = updateAndRefetch(
+            tenantId,
+            transactionId,
+            "Linked transaction {} to entry {} for tenant {}",
+            transactionId,
+            cashflowEntryId,
+            tenantId
+        ) {
             bankTransactionRepository.markMatched(
                 tenantId = tenantId,
                 transactionId = transactionId,
@@ -148,7 +157,14 @@ class BankingService(
         reason: IgnoredReason,
         ignoredBy: String,
     ): Result<BankTransactionDto> = runSuspendCatching {
-        updateAndRefetch(tenantId, transactionId, "Ignored transaction {} (reason={}) for tenant {}", transactionId, reason, tenantId) {
+        updateAndRefetch(
+            tenantId,
+            transactionId,
+            "Ignored transaction {} (reason={}) for tenant {}",
+            transactionId,
+            reason,
+            tenantId
+        ) {
             bankTransactionRepository.markIgnored(tenantId, transactionId, reason, ignoredBy)
         }
     }
@@ -163,7 +179,14 @@ class BankingService(
         val matchedEntryId = transaction.matchedCashflowId
             ?: throw DokusException.BadRequest("Transaction has no suggested match to confirm")
 
-        val result = updateAndRefetch(tenantId, transactionId, "Confirmed match for transaction {} -> entry {} for tenant {}", transactionId, matchedEntryId, tenantId) {
+        val result = updateAndRefetch(
+            tenantId,
+            transactionId,
+            "Confirmed match for transaction {} -> entry {} for tenant {}",
+            transactionId,
+            matchedEntryId,
+            tenantId
+        ) {
             bankTransactionRepository.markMatched(
                 tenantId = tenantId,
                 transactionId = transactionId,
@@ -200,7 +223,13 @@ class BankingService(
 
         val documentId = transaction.matchedDocumentId
 
-        val result = updateAndRefetch(tenantId, transactionId, "Rejected match for transaction {} for tenant {}", transactionId, tenantId) {
+        val result = updateAndRefetch(
+            tenantId,
+            transactionId,
+            "Rejected match for transaction {} for tenant {}",
+            transactionId,
+            tenantId
+        ) {
             bankTransactionRepository.clearMatch(tenantId, transactionId)
         }
 
@@ -233,7 +262,13 @@ class BankingService(
             throw DokusException.BadRequest("Only matched or needs-review transactions can be undone")
         }
 
-        val result = updateAndRefetch(tenantId, transactionId, "Undid match for transaction {} for tenant {}", transactionId, tenantId) {
+        val result = updateAndRefetch(
+            tenantId,
+            transactionId,
+            "Undid match for transaction {} for tenant {}",
+            transactionId,
+            tenantId
+        ) {
             bankTransactionRepository.clearMatch(tenantId, transactionId)
         }
 
@@ -321,7 +356,7 @@ class BankingService(
             request = CreateExpenseRequest(
                 date = transaction.transactionDate,
                 merchant = transaction.counterpartyName ?: "Unknown",
-                amount = Money(abs(transaction.signedAmount.minor)),
+                amount = Money(abs(transaction.signedAmount.minor), transaction.currency),
                 category = ExpenseCategory.Other,
                 description = transaction.descriptionRaw,
             ),
@@ -379,7 +414,7 @@ class BankingService(
             val points = dates.map { date ->
                 val dayAmount = dailyAmounts[date] ?: 0L
                 runningBalance += dayAmount
-                BalanceHistoryPointDto(date = date, balance = Money(runningBalance))
+                BalanceHistoryPointDto(date = date, balance = Money(runningBalance, account.currency))
             }
 
             AccountBalanceSeriesDto(
@@ -391,11 +426,12 @@ class BankingService(
 
         // Compute total series by summing balances across accounts per day
         val dates = generateDateRange(startDate, today)
+        val totalCurrency = accounts.firstOrNull()?.currency ?: Currency.Eur
         val totalSeries = dates.mapIndexed { index, date ->
             val totalMinor = accountSeries.sumOf { series ->
                 series.points.getOrNull(index)?.balance?.minor ?: 0L
             }
-            BalanceHistoryPointDto(date = date, balance = Money(totalMinor))
+            BalanceHistoryPointDto(date = date, balance = Money(totalMinor, totalCurrency))
         }
 
         BalanceHistoryResponse(series = accountSeries, totalSeries = totalSeries)

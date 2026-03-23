@@ -1,18 +1,18 @@
 package tech.dokus.backend.services.cashflow.matching
 
-import kotlin.math.abs
 import kotlinx.datetime.DateTimeUnit
 import kotlinx.datetime.minus
 import kotlinx.datetime.plus
+import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.database.repository.banking.BankAccountRepository
 import tech.dokus.database.repository.banking.BankTransactionRepository
+import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.database.entity.BankTransactionEntity
-import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.foundation.backend.utils.loggerFor
+import kotlin.math.abs
 
 /**
  * Detects internal transfers between tenant-owned accounts.
@@ -53,7 +53,11 @@ class TransferDetector(
 
         // Must be same currency
         if (transaction.currency != destinationAccount.currency) {
-            logger.debug("Transfer skipped: currency mismatch {} vs {}", transaction.currency, destinationAccount.currency)
+            logger.debug(
+                "Transfer skipped: currency mismatch {} vs {}",
+                transaction.currency,
+                destinationAccount.currency
+            )
             return TransferResult.LikelyTransfer(
                 destinationAccountId = destinationAccount.id,
                 reason = "Currency mismatch — manual review required",
@@ -66,7 +70,11 @@ class TransferDetector(
         return if (counterpart != null) {
             logger.info(
                 "Clear transfer pair detected: {} ↔ {} (amount={}, accounts={} → {})",
-                transaction.id, counterpart.id, transaction.signedAmount, sourceAccountId, destinationAccount.id
+                transaction.id,
+                counterpart.id,
+                transaction.signedAmount,
+                sourceAccountId,
+                destinationAccount.id
             )
             TransferResult.ClearPair(
                 counterpartTransactionId = counterpart.id,
@@ -75,7 +83,8 @@ class TransferDetector(
         } else {
             logger.info(
                 "Likely one-sided transfer: {} to account {} (counterpart not yet imported)",
-                transaction.id, destinationAccount.id
+                transaction.id,
+                destinationAccount.id
             )
             TransferResult.LikelyTransfer(
                 destinationAccountId = destinationAccount.id,

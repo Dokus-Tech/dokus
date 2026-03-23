@@ -66,19 +66,31 @@ fun DocDto.Invoice.Confirmed.Companion.from(entity: InvoiceEntity): DocDto.Invoi
         notes = entity.notes,
         status = entity.status,
         structuredCommunication = entity.structuredCommunication,
-        peppol = if (entity.peppolId != null && entity.peppolSentAt != null) InvoicePeppolInfo(
-            peppolId = entity.peppolId!!,
-            sentAt = entity.peppolSentAt!!,
-            status = entity.peppolStatus ?: tech.dokus.domain.enums.PeppolStatus.Pending
-        ) else null,
-        paymentLinkInfo = if (entity.paymentLink != null) PaymentLinkInfo(
-            url = entity.paymentLink!!,
-            expiresAt = entity.paymentLinkExpiresAt
-        ) else null,
-        paymentInfo = if (entity.paidAt != null) InvoicePaymentInfo(
-            paidAt = entity.paidAt!!,
-            paymentMethod = entity.paymentMethod ?: tech.dokus.domain.enums.PaymentMethod.BankTransfer
-        ) else null,
+        peppol = if (entity.peppolId != null && entity.peppolSentAt != null) {
+            InvoicePeppolInfo(
+                peppolId = entity.peppolId!!,
+                sentAt = entity.peppolSentAt!!,
+                status = entity.peppolStatus ?: tech.dokus.domain.enums.PeppolStatus.Pending
+            )
+        } else {
+            null
+        },
+        paymentLinkInfo = if (entity.paymentLink != null) {
+            PaymentLinkInfo(
+                url = entity.paymentLink!!,
+                expiresAt = entity.paymentLinkExpiresAt
+            )
+        } else {
+            null
+        },
+        paymentInfo = if (entity.paidAt != null) {
+            InvoicePaymentInfo(
+                paidAt = entity.paidAt!!,
+                paymentMethod = entity.paymentMethod ?: tech.dokus.domain.enums.PaymentMethod.BankTransfer
+            )
+        } else {
+            null
+        },
         documentId = entity.documentId,
         confirmedAt = entity.confirmedAt,
         confirmedBy = entity.confirmedBy,

@@ -1,5 +1,7 @@
 package tech.dokus.backend.services.cashflow.matching
 
+import tech.dokus.database.entity.BankTransactionEntity
+import tech.dokus.database.entity.CashflowEntryEntity
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.MatchSignalType
@@ -7,10 +9,7 @@ import tech.dokus.domain.enums.StatementTrust
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
-import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.database.entity.BankTransactionEntity
-import tech.dokus.database.entity.CashflowEntryEntity
 
 /**
  * Result of a single signal evaluation during scoring.
@@ -55,8 +54,10 @@ data class ScoredCandidate(
 enum class MatchDecisionType {
     /** Strong enough for auto-match + auto-pay. */
     AutoMatch,
+
     /** Decent score but needs human review. */
     NeedsReview,
+
     /** Below threshold — discard. */
     Discard,
 }

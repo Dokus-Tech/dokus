@@ -4,6 +4,7 @@ import org.jetbrains.exposed.v1.core.ResultRow
 import tech.dokus.database.entity.BankStatementEntity
 import tech.dokus.database.tables.banking.BankStatementsTable
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.BankAccountId
 import tech.dokus.domain.ids.DocumentId
@@ -24,8 +25,8 @@ fun BankStatementEntity.Companion.from(row: ResultRow): BankStatementEntity = Ba
     accountIban = row[BankStatementsTable.accountIban]?.let(::Iban),
     periodStart = row[BankStatementsTable.periodStart],
     periodEnd = row[BankStatementsTable.periodEnd],
-    openingBalance = row[BankStatementsTable.openingBalance]?.let { Money.fromDbDecimal(it) },
-    closingBalance = row[BankStatementsTable.closingBalance]?.let { Money.fromDbDecimal(it) },
+    openingBalance = row[BankStatementsTable.openingBalance]?.let { Money.fromDbDecimal(it, Currency.Eur) },
+    closingBalance = row[BankStatementsTable.closingBalance]?.let { Money.fromDbDecimal(it, Currency.Eur) },
     transactionCount = row[BankStatementsTable.transactionCount],
     createdAt = row[BankStatementsTable.createdAt],
 )

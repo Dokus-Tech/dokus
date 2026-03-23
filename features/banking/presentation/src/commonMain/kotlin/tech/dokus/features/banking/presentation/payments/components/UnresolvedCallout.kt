@@ -9,6 +9,7 @@ import tech.dokus.aura.resources.Res
 import tech.dokus.aura.resources.banking_unresolved_amount
 import tech.dokus.aura.resources.banking_unresolved_callout
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.foundation.aura.components.common.CalloutTrailing
 import tech.dokus.foundation.aura.components.common.DokusCalloutBanner
 import tech.dokus.foundation.aura.tooling.PreviewParameters
@@ -27,7 +28,7 @@ internal fun UnresolvedCallout(
         trailing = CalloutTrailing.Label(
             text = stringResource(
                 Res.string.banking_unresolved_amount,
-                "\u20ac${unresolvedAmount.toDisplayString()}",
+                "\u20ac${unresolvedAmount.formatAmount()}",
             ),
         ),
     )
@@ -41,7 +42,7 @@ private fun UnresolvedCalloutPreview(
     TestWrapper(parameters) {
         UnresolvedCallout(
             unresolvedCount = 15,
-            unresolvedAmount = Money.parseOrThrow("8420.50"),
+            unresolvedAmount = Money.parseOrThrow("8420.50", Currency.Eur),
         )
     }
 }

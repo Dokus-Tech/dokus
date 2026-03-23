@@ -13,8 +13,8 @@ import io.ktor.server.routing.Route
 import org.koin.ktor.ext.inject
 import tech.dokus.backend.security.requireTenantId
 import tech.dokus.backend.services.cashflow.InvoiceService
-import tech.dokus.backend.services.pdf.InvoicePdfService
 import tech.dokus.backend.services.contacts.ContactService
+import tech.dokus.backend.services.pdf.InvoicePdfService
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.ContactId
@@ -23,7 +23,6 @@ import tech.dokus.domain.model.CreateInvoiceRequest
 import tech.dokus.domain.model.InvoicePdfResponse
 import tech.dokus.domain.model.InvoiceStatusRequest
 import tech.dokus.domain.model.RecordPaymentRequest
-import tech.dokus.domain.model.common.PaginatedResponse
 import tech.dokus.domain.routes.Invoices
 import tech.dokus.foundation.backend.security.authenticateJwt
 import kotlin.uuid.ExperimentalUuidApi

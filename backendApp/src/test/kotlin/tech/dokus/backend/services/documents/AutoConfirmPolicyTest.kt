@@ -4,6 +4,7 @@ import kotlinx.datetime.LocalDate
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentType
@@ -221,7 +222,7 @@ class AutoConfirmPolicyTest {
     private fun invoiceDraft(direction: DocumentDirection = DocumentDirection.Inbound) = InvoiceDraftData(
         direction = direction,
         invoiceNumber = "5480883565",
-        totalAmount = Money.from("18.48")
+        totalAmount = Money.from("18.48", Currency.Eur)
     )
 
     private fun receiptDraft(
@@ -231,7 +232,7 @@ class AutoConfirmPolicyTest {
         direction = DocumentDirection.Inbound,
         merchantName = merchant,
         date = date,
-        totalAmount = Money.from("18.48")
+        totalAmount = Money.from("18.48", Currency.Eur)
     )
 
     private fun creditNoteDraft(
@@ -240,8 +241,8 @@ class AutoConfirmPolicyTest {
         creditNoteNumber = "CN-100",
         direction = DocumentDirection.Inbound,
         issueDate = issueDate,
-        subtotalAmount = Money.from("100.00"),
-        vatAmount = Money.from("21.00"),
-        totalAmount = Money.from("121.00")
+        subtotalAmount = Money.from("100.00", Currency.Eur),
+        vatAmount = Money.from("21.00", Currency.Eur),
+        totalAmount = Money.from("121.00", Currency.Eur)
     )
 }

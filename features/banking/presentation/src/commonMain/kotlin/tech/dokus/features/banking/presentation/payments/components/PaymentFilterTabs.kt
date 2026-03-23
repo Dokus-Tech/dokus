@@ -12,6 +12,7 @@ import tech.dokus.aura.resources.banking_filter_matched
 import tech.dokus.aura.resources.banking_filter_needs_review
 import tech.dokus.aura.resources.banking_filter_unmatched
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.model.BankTransactionSummaryDto
 import tech.dokus.features.banking.presentation.payments.mvi.PaymentFilterTab
 import tech.dokus.foundation.aura.components.tabs.DokusTab
@@ -85,7 +86,7 @@ private fun PaymentFilterTabsPreview(
                 matchedCount = 45,
                 ignoredCount = 5,
                 totalCount = 65,
-                totalUnresolvedAmount = Money.parseOrThrow("8420.50"),
+                totalUnresolvedAmount = Money.parseOrThrow("8420.50", Currency.Eur),
             ),
             onTabSelected = {},
         )

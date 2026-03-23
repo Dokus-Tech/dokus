@@ -22,7 +22,9 @@ import tech.dokus.domain.ids.UserId
 fun InvoiceEntity.Companion.from(
     row: ResultRow,
     items: List<InvoiceItemEntity>,
-): InvoiceEntity = InvoiceEntity(
+): InvoiceEntity {
+    val currency = row[InvoicesTable.currency]
+    return InvoiceEntity(
     id = InvoiceId.parse(row[InvoicesTable.id].value.toString()),
     tenantId = TenantId.parse(row[InvoicesTable.tenantId].toString()),
     direction = row[InvoicesTable.direction],
@@ -30,12 +32,12 @@ fun InvoiceEntity.Companion.from(
     invoiceNumber = InvoiceNumber(row[InvoicesTable.invoiceNumber]),
     issueDate = row[InvoicesTable.issueDate],
     dueDate = row[InvoicesTable.dueDate],
-    subtotalAmount = Money.fromDbDecimal(row[InvoicesTable.subtotalAmount]),
-    vatAmount = Money.fromDbDecimal(row[InvoicesTable.vatAmount]),
-    totalAmount = Money.fromDbDecimal(row[InvoicesTable.totalAmount]),
-    paidAmount = Money.fromDbDecimal(row[InvoicesTable.paidAmount]),
+    subtotalAmount = Money.fromDbDecimal(row[InvoicesTable.subtotalAmount], currency),
+    vatAmount = Money.fromDbDecimal(row[InvoicesTable.vatAmount], currency),
+    totalAmount = Money.fromDbDecimal(row[InvoicesTable.totalAmount], currency),
+    paidAmount = Money.fromDbDecimal(row[InvoicesTable.paidAmount], currency),
     status = row[InvoicesTable.status],
-    currency = row[InvoicesTable.currency],
+    currency = currency,
     notes = row[InvoicesTable.notes],
     paymentTermsDays = row[InvoicesTable.paymentTermsDays],
     dueDateMode = row[InvoicesTable.dueDateMode],
@@ -58,18 +60,20 @@ fun InvoiceEntity.Companion.from(
     createdAt = row[InvoicesTable.createdAt],
     updatedAt = row[InvoicesTable.updatedAt],
 )
+}
 
 fun InvoiceItemEntity.Companion.from(
     row: ResultRow,
     invoiceId: InvoiceId,
+    currency: tech.dokus.domain.enums.Currency,
 ): InvoiceItemEntity = InvoiceItemEntity(
     id = row[InvoiceItemsTable.id].value.toString(),
     invoiceId = invoiceId,
     description = row[InvoiceItemsTable.description],
     quantity = row[InvoiceItemsTable.quantity].toDouble(),
-    unitPrice = Money.fromDbDecimal(row[InvoiceItemsTable.unitPrice]),
+    unitPrice = Money.fromDbDecimal(row[InvoiceItemsTable.unitPrice], currency),
     vatRate = VatRate.fromDbDecimal(row[InvoiceItemsTable.vatRate]),
-    lineTotal = Money.fromDbDecimal(row[InvoiceItemsTable.lineTotal]),
-    vatAmount = Money.fromDbDecimal(row[InvoiceItemsTable.vatAmount]),
+    lineTotal = Money.fromDbDecimal(row[InvoiceItemsTable.lineTotal], currency),
+    vatAmount = Money.fromDbDecimal(row[InvoiceItemsTable.vatAmount], currency),
     sortOrder = row[InvoiceItemsTable.sortOrder],
 )

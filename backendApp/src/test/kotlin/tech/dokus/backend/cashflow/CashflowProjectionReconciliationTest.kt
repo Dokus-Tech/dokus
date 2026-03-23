@@ -155,7 +155,7 @@ class CashflowProjectionReconciliationTest {
     @Test
     fun `ensureProjectionIfMissing preserves fully paid invoice state with paidAt and is idempotent`() = runBlocking {
         val paidAt = LocalDateTime(2024, 2, 10, 12, 0, 0)
-        val total = Money.from("121.00")!!
+        val total = Money.from("121.00", Currency.Eur)!!
         val (documentId, invoiceEntity) = seedConfirmedInvoice(
             totalAmount = total,
             paidAmount = total,
@@ -173,7 +173,7 @@ class CashflowProjectionReconciliationTest {
         assertEquals(firstEntryId, secondEntryId)
         val entry = cashflowEntriesRepository.getByDocumentId(tenantId, documentId).getOrThrow()
         assertNotNull(entry)
-        assertEquals(Money.ZERO, entry.remainingAmount)
+        assertEquals(Money.zero(Currency.Eur), entry.remainingAmount)
         assertEquals(CashflowEntryStatus.Paid, entry.status)
         assertEquals(paidAt, entry.paidAt)
         transaction(database) {
@@ -183,8 +183,8 @@ class CashflowProjectionReconciliationTest {
 
     @Test
     fun `ensureProjectionIfMissing preserves partially paid invoice state`() = runBlocking {
-        val total = Money.from("121.00")!!
-        val paidAmount = Money.from("21.00")!!
+        val total = Money.from("121.00", Currency.Eur)!!
+        val paidAmount = Money.from("21.00", Currency.Eur)!!
         val (documentId, invoiceEntity) = seedConfirmedInvoice(
             totalAmount = total,
             paidAmount = paidAmount,
@@ -198,14 +198,14 @@ class CashflowProjectionReconciliationTest {
         assertNotNull(entryId)
         val entry = cashflowEntriesRepository.getByDocumentId(tenantId, documentId).getOrThrow()
         assertNotNull(entry)
-        assertEquals(Money.from("100.00")!!, entry.remainingAmount)
+        assertEquals(Money.from("100.00", Currency.Eur)!!, entry.remainingAmount)
         assertEquals(CashflowEntryStatus.Open, entry.status)
         assertNull(entry.paidAt)
     }
 
     @Test
     fun `startup sweep repairs dormant missing projections and counts paid-without-paidAt anomalies`() = runBlocking {
-        val total = Money.from("121.00")!!
+        val total = Money.from("121.00", Currency.Eur)!!
         val (documentId, _) = seedConfirmedInvoice(
             totalAmount = total,
             paidAmount = total,
@@ -218,7 +218,7 @@ class CashflowProjectionReconciliationTest {
 
         val repaired = cashflowEntriesRepository.getByDocumentId(tenantId, documentId).getOrThrow()
         assertNotNull(repaired)
-        assertEquals(Money.ZERO, repaired.remainingAmount)
+        assertEquals(Money.zero(Currency.Eur), repaired.remainingAmount)
         assertEquals(CashflowEntryStatus.Paid, repaired.status)
         assertNull(repaired.paidAt)
         assertEquals(1, firstReport.paidWithoutPaidAtDetected)
@@ -249,9 +249,9 @@ class CashflowProjectionReconciliationTest {
                 issueDate = LocalDate(2024, 1, 1),
                 dueDate = LocalDate(2024, 1, 31),
                 currency = Currency.Eur,
-                subtotalAmount = Money.from("100.00"),
-                vatAmount = Money.from("21.00"),
-                totalAmount = Money.from("121.00")
+                subtotalAmount = Money.from("100.00", Currency.Eur),
+                vatAmount = Money.from("21.00", Currency.Eur),
+                totalAmount = Money.from("121.00", Currency.Eur)
             ),
             documentType = DocumentType.Invoice,
             force = true

@@ -159,7 +159,7 @@ private fun SourceStructuredEvidence(
                 StructuredValue(stringResource(Res.string.review_label_invoice), draft.invoiceNumber ?: "\u2014")
                 StructuredValue(stringResource(Res.string.common_date), draft.issueDate?.let { formatShortDate(it) } ?: "\u2014")
                 StructuredValue(stringResource(Res.string.mobile_label_due), draft.dueDate?.let { formatShortDate(it) } ?: "\u2014")
-                StructuredValue(stringResource(Res.string.inspector_label_total), draft.totalAmount?.toDisplayString() ?: "\u2014", emphasized = true)
+                StructuredValue(stringResource(Res.string.inspector_label_total), draft.totalAmount?.formatAmount() ?: "\u2014", emphasized = true)
 
                 if (draft.lineItems.isNotEmpty()) {
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
@@ -171,7 +171,7 @@ private fun SourceStructuredEvidence(
                     draft.lineItems.forEach { item ->
                         StructuredValue(
                             label = item.description.ifBlank { "\u2014" },
-                            value = item.netAmount?.toDisplayString() ?: "\u2014",
+                            value = item.netAmount?.formatAmount() ?: "\u2014",
                         )
                     }
                 }
@@ -181,7 +181,7 @@ private fun SourceStructuredEvidence(
                 StructuredValue(stringResource(Res.string.banking_detail_counterparty), vendorName ?: "\u2014")
                 StructuredValue(stringResource(Res.string.review_label_credit_note), draft.creditNoteNumber ?: "\u2014")
                 StructuredValue(stringResource(Res.string.common_date), draft.issueDate?.let { formatShortDate(it) } ?: "\u2014")
-                StructuredValue(stringResource(Res.string.inspector_label_total), draft.totalAmount?.toDisplayString() ?: "\u2014", emphasized = true)
+                StructuredValue(stringResource(Res.string.inspector_label_total), draft.totalAmount?.formatAmount() ?: "\u2014", emphasized = true)
             }
 
             is DocDto.Receipt,

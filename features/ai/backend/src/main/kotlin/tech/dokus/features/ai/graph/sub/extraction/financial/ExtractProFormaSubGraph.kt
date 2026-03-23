@@ -86,14 +86,15 @@ private class ProFormaExtractionFinishTool : Tool<ProFormaExtractionToolInput, F
     description = "Submit extracted pro forma invoice fields from the document. Only include values you can see.",
 ) {
     override suspend fun execute(args: ProFormaExtractionToolInput): FinancialExtractionResult.ProForma {
+        val currency = Currency.from(args.currency)
         return FinancialExtractionResult.ProForma(
             ProFormaExtractionResult(
                 proFormaNumber = args.proFormaNumber,
                 issueDate = args.issueDate,
-                currency = Currency.from(args.currency),
-                subtotalAmount = Money.from(args.subtotalAmount),
-                vatAmount = Money.from(args.vatAmount),
-                totalAmount = Money.from(args.totalAmount),
+                currency = currency,
+                subtotalAmount = Money.from(args.subtotalAmount, currency),
+                vatAmount = Money.from(args.vatAmount, currency),
+                totalAmount = Money.from(args.totalAmount, currency),
                 customerName = args.customerName,
                 customerVat = VatNumber.from(args.customerVat),
                 customerEmail = Email.from(args.customerEmail),

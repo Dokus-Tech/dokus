@@ -1,14 +1,11 @@
 package tech.dokus.backend.services.cashflow.matching
 
+import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.database.repository.cashflow.matching.InvoiceMatchMeta
 import tech.dokus.database.repository.cashflow.matching.MatchingRepository
-import tech.dokus.domain.Money
-import tech.dokus.domain.enums.CashflowSourceType
 import tech.dokus.domain.enums.MatchSignalType
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.DocumentId
-import tech.dokus.database.entity.BankTransactionEntity
-import tech.dokus.database.entity.CashflowEntryEntity
 import tech.dokus.domain.model.TransactionCommunicationDto
 import tech.dokus.domain.util.JaroWinkler
 import kotlin.math.abs

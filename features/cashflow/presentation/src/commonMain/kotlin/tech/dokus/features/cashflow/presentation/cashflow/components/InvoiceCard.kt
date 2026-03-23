@@ -24,6 +24,7 @@ import tech.dokus.aura.resources.invoice_status_overdue
 import tech.dokus.aura.resources.invoice_status_paid
 import tech.dokus.aura.resources.invoice_status_sent
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.InvoiceStatus
 import tech.dokus.domain.ids.ContactId
 import tech.dokus.domain.ids.InvoiceId
@@ -123,9 +124,9 @@ private fun InvoiceCardPreview(
                 invoiceNumber = "INV-001",
                 issueDate = kotlinx.datetime.LocalDate(2024, 12, 13),
                 dueDate = kotlinx.datetime.LocalDate(2025, 1, 13),
-                subtotalAmount = Money(340000),
-                vatAmount = Money(71400),
-                totalAmount = Money(411400),
+                subtotalAmount = Money(340000, Currency.Eur),
+                vatAmount = Money(71400, Currency.Eur),
+                totalAmount = Money(411400, Currency.Eur),
                 status = InvoiceStatus.Draft,
                 createdAt = now,
                 updatedAt = now

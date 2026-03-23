@@ -1,6 +1,7 @@
 package tech.dokus.features.ai.validation
 
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.model.FinancialLineItemDto
 
 object LineItemsValidator {
@@ -15,7 +16,8 @@ object LineItemsValidator {
             return@buildList
         }
 
-        val netAmounts = lineItems.mapNotNull { it.netAmount?.let { amount -> Money(amount) } }
+        val currency = subtotal?.currency ?: Currency.Eur
+        val netAmounts = lineItems.mapNotNull { it.netAmount?.let { amount -> Money(amount, currency) } }
         if (netAmounts.size == lineItems.size) {
             add(MathValidator.verifyLineItems(netAmounts, subtotal))
         } else {
@@ -26,8 +28,8 @@ object LineItemsValidator {
             add(
                 MathValidator.verifyLineItemCalculation(
                     quantity = item.quantity?.toDouble(),
-                    unitPrice = item.unitPrice?.let { Money(it) },
-                    lineTotal = item.netAmount?.let { Money(it) },
+                    unitPrice = item.unitPrice?.let { Money(it, currency) },
+                    lineTotal = item.netAmount?.let { Money(it, currency) },
                     lineIndex = index + 1
                 )
             )

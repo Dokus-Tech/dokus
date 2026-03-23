@@ -95,7 +95,7 @@ sealed interface DocDto {
             override val subtotalAmount: Money? = null,
             override val vatAmount: Money? = null,
             override val totalAmount: Money? = null,
-            val paidAmount: Money = Money.ZERO,
+            val paidAmount: Money = Money.zero(Currency.Eur),
             override val lineItems: List<DocLineItem> = emptyList(),
             override val iban: Iban? = null,
             override val notes: String? = null,

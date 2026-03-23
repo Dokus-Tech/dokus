@@ -1,6 +1,7 @@
 package tech.dokus.features.cashflow.presentation.detail.models
 
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.model.BankStatementTransactionDraftRowDto
 import tech.dokus.domain.model.AnnualAccountsDraftData
 import tech.dokus.domain.model.BankFeeDraftData
@@ -114,8 +115,8 @@ internal fun DocumentDraftData.toUiData(): DocumentUiData = when (this) {
         institutionName = institution.name,
         periodStart = periodStart?.toString(),
         periodEnd = periodEnd?.toString(),
-        openingBalance = openingBalance?.toDisplayString(),
-        closingBalance = closingBalance?.toDisplayString(),
+        openingBalance = openingBalance?.formatAmount(),
+        closingBalance = closingBalance?.formatAmount(),
         movement = movementDisplay(openingBalance, closingBalance),
         transactions = transactions.mapIndexed { index, row ->
             row.toUiRow(index)
@@ -174,7 +175,7 @@ internal fun DocumentDraftData.toUiData(): DocumentUiData = when (this) {
 
 private fun FinancialLineItemDto.toLineItemUiData(currencySign: String): LineItemUiData {
     val net = netAmount ?: unitPrice?.let { unit -> (quantity ?: 1L) * unit }
-    val displayAmount = net?.let { "$currencySign${Money(it).toDisplayString()}" } ?: "\u2014"
+    val displayAmount = net?.let { "$currencySign${Money(it, Currency.Eur).formatAmount()}" } ?: "\u2014"
     return LineItemUiData(
         description = description.ifBlank { "\u2014" },
         displayAmount = displayAmount,
@@ -182,7 +183,7 @@ private fun FinancialLineItemDto.toLineItemUiData(currencySign: String): LineIte
 }
 
 private fun DocLineItem.toLineItemUiData(currencySign: String): LineItemUiData {
-    val displayAmount = netAmount?.let { "$currencySign${it.toDisplayString()}" } ?: "\u2014"
+    val displayAmount = netAmount?.let { "$currencySign${it.formatAmount()}" } ?: "\u2014"
     return LineItemUiData(
         description = description.ifBlank { "\u2014" },
         displayAmount = displayAmount,
@@ -250,8 +251,8 @@ internal fun DocDto.toUiData(): DocumentUiData = when (this) {
         },
         periodStart = periodStart?.toString(),
         periodEnd = periodEnd?.toString(),
-        openingBalance = openingBalance?.toDisplayString(),
-        closingBalance = closingBalance?.toDisplayString(),
+        openingBalance = openingBalance?.formatAmount(),
+        closingBalance = closingBalance?.formatAmount(),
         movement = movementDisplay(openingBalance, closingBalance),
         transactions = when (this) {
             is DocDto.BankStatement.Draft -> transactions.mapIndexed { index, row ->
@@ -312,7 +313,7 @@ internal fun DocDto.toUiData(): DocumentUiData = when (this) {
 }
 
 private fun movementDisplay(opening: Money?, closing: Money?): String? =
-    if (opening != null && closing != null) Money(closing.minor - opening.minor).toDisplayString() else null
+    if (opening != null && closing != null) Money(closing.minor - opening.minor, closing.currency).formatAmount() else null
 
 private fun BankStatementTransactionDraftRowDto.toUiRow(index: Int): BankStatementTransactionUiRow {
     val amount = signedAmount
@@ -329,7 +330,7 @@ private fun BankStatementTransactionDraftRowDto.toUiRow(index: Int): BankStateme
         counterpartyName = counterparty.name,
         counterpartyIban = counterparty.iban?.value,
         communication = communicationText,
-        displayAmount = amount?.toDisplayString().orEmpty(),
+        displayAmount = amount?.formatAmount().orEmpty(),
         amountMinor = amount?.minor ?: 0L,
         isExcluded = excluded,
         isDuplicate = potentialDuplicate,

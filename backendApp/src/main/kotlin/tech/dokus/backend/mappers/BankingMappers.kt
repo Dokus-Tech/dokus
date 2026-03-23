@@ -4,9 +4,9 @@ import tech.dokus.database.entity.BankAccountEntity
 import tech.dokus.database.entity.BankTransactionEntity
 import tech.dokus.domain.model.BankAccountDto
 import tech.dokus.domain.model.BankTransactionDto
+import tech.dokus.domain.model.TransactionCommunicationDto
 import tech.dokus.domain.model.TransactionIgnoreInfoDto
 import tech.dokus.domain.model.TransactionMatchInfoDto
-import tech.dokus.domain.model.TransactionCommunicationDto
 import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 
 fun BankAccountDto.Companion.from(entity: BankAccountEntity) = BankAccountDto(

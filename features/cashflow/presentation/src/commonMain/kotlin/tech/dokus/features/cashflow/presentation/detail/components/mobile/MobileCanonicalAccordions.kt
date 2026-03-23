@@ -309,17 +309,17 @@ private fun MobileTotalsBlock(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(
-            text = "Subtotal ${subtotalAmount?.let { "$currencySign${it.toDisplayString()}" } ?: "\u2014"}",
+            text = "Subtotal ${subtotalAmount?.let { "$currencySign${it.formatAmount()}" } ?: "\u2014"}",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.textMuted,
         )
         Text(
-            text = "VAT 21% ${vatAmount?.let { "$currencySign${it.toDisplayString()}" } ?: "\u2014"}",
+            text = "VAT 21% ${vatAmount?.let { "$currencySign${it.formatAmount()}" } ?: "\u2014"}",
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.textMuted,
         )
         Text(
-            text = "Total $currencySign${totalAmount?.toDisplayString() ?: "\u2014"}",
+            text = "Total $currencySign${totalAmount?.formatAmount() ?: "\u2014"}",
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
         )

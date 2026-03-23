@@ -130,7 +130,7 @@ internal fun CanonicalCenterPane(
     val creditNote = uiData as? DocumentUiData.CreditNote ?: return
     val currencySign = creditNote.currencySign
     val documentNumber = creditNote.creditNoteNumber ?: "\u2014"
-    val totalAmount = creditNote.totalAmount?.toDisplayString() ?: "\u2014"
+    val totalAmount = creditNote.totalAmount?.formatAmount() ?: "\u2014"
 
     Box(
         modifier = modifier.fillMaxSize(),
@@ -227,8 +227,8 @@ internal fun CanonicalCenterPane(
 
                 CanonicalTotals(
                     currencySign = currencySign,
-                    subtotal = creditNote.subtotalAmount?.toDisplayString(),
-                    vat = creditNote.vatAmount?.toDisplayString(),
+                    subtotal = creditNote.subtotalAmount?.formatAmount(),
+                    vat = creditNote.vatAmount?.formatAmount(),
                     total = totalAmount,
                 )
 

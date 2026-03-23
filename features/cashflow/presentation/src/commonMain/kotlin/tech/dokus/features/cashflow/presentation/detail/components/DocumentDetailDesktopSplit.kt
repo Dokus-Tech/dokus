@@ -328,7 +328,7 @@ private fun DocumentDetailDesktopSplitPreview(
         id = mockId,
         vendorName = DisplayName("Acme Corp"),
         date = LocalDate(2026, 2, 15),
-        amount = Money.from("1234.56")!!,
+        amount = Money.from("1234.56", Currency.Eur)!!,
         currency = Currency.Eur,
         status = DocQueueStatus.Review,
     )
@@ -338,7 +338,7 @@ private fun DocumentDetailDesktopSplitPreview(
             id = DocumentId.generate(),
             vendorName = DisplayName("Tech Solutions"),
             date = LocalDate(2026, 2, 14),
-            amount = Money.from("890.50")!!,
+            amount = Money.from("890.50", Currency.Eur)!!,
             currency = Currency.Eur,
             status = DocQueueStatus.Paid,
         ),

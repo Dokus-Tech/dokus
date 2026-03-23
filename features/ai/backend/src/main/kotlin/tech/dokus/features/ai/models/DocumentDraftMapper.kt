@@ -10,6 +10,7 @@ import tech.dokus.domain.model.PartyDraftDto
 import tech.dokus.domain.model.ReceiptDraftData
 import tech.dokus.domain.model.TransactionCommunicationDto
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.model.contact.CounterpartySnapshotDto
 import tech.dokus.domain.model.toEmptyDraftData
 
@@ -28,7 +29,7 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
         dueDate = data.dueDate,
         currency = data.currency,
         subtotalAmount = data.subtotalAmount,
-        vatAmount = data.vatAmount ?: inferZeroVat(data.lineItems, data.vatBreakdown),
+        vatAmount = data.vatAmount ?: inferZeroVat(data.lineItems, data.vatBreakdown, data.currency),
         totalAmount = data.totalAmount,
         lineItems = data.lineItems,
         vatBreakdown = data.vatBreakdown,
@@ -61,7 +62,7 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
         issueDate = data.issueDate,
         currency = data.currency,
         subtotalAmount = data.subtotalAmount,
-        vatAmount = data.vatAmount ?: inferZeroVat(data.lineItems, data.vatBreakdown),
+        vatAmount = data.vatAmount ?: inferZeroVat(data.lineItems, data.vatBreakdown, data.currency),
         totalAmount = data.totalAmount,
         lineItems = data.lineItems,
         vatBreakdown = data.vatBreakdown,
@@ -138,18 +139,19 @@ private fun FinancialExtractionResult.toDraftData(direction: DocumentDirection):
 private fun inferZeroVat(
     lineItems: List<tech.dokus.domain.model.FinancialLineItemDto>,
     vatBreakdown: List<tech.dokus.domain.model.VatBreakdownEntryDto>,
+    currency: Currency,
 ): Money? {
     // If vatBreakdown explicitly says amount = 0 for all entries
     if (vatBreakdown.isNotEmpty() && vatBreakdown.all { it.amount == 0L }) {
-        return Money.ZERO
+        return Money.zero(currency)
     }
     // If all line items have vatRate = 0
     if (lineItems.isNotEmpty() && lineItems.all { it.vatRate == 0 }) {
-        return Money.ZERO
+        return Money.zero(currency)
     }
     // No VAT data at all: empty breakdown and all line items have null vatRate (e.g. non-EU seller)
     if (vatBreakdown.isEmpty() && lineItems.isNotEmpty() && lineItems.all { it.vatRate == null }) {
-        return Money.ZERO
+        return Money.zero(currency)
     }
     return null
 }

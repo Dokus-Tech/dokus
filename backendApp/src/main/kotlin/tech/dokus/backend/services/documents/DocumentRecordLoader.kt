@@ -4,13 +4,13 @@ import tech.dokus.backend.mappers.from
 import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
 import tech.dokus.backend.routes.cashflow.documents.confirmedEntityToDocDto
 import tech.dokus.backend.routes.cashflow.documents.findConfirmedEntity
+import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.database.repository.banking.BankStatementRepository
 import tech.dokus.database.repository.banking.BankTransactionRepository
 import tech.dokus.database.repository.cashflow.CashflowEntriesRepository
 import tech.dokus.database.repository.cashflow.CreditNoteRepository
 import tech.dokus.database.repository.cashflow.DocumentIngestionRunRepository
 import tech.dokus.database.repository.cashflow.DocumentRepository
-import tech.dokus.database.entity.DraftSummaryEntity
 import tech.dokus.database.repository.cashflow.ExpenseRepository
 import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.cashflow.selectPreferredSourceDto
@@ -19,11 +19,10 @@ import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.ids.TenantId
-import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentDraftDto
 import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.DocumentMatchReviewSummaryDto
-import tech.dokus.domain.model.DocumentSourceDto
 import tech.dokus.domain.model.contact.ContactSuggestionDto
 import tech.dokus.domain.model.contact.CounterpartyInfo
 import tech.dokus.domain.model.contact.CounterpartySnapshotDto
@@ -64,7 +63,12 @@ internal class DocumentRecordLoader(
             document
         }
 
-        val documentWithUrl = addDownloadUrl(effectiveDocument, preferredSource?.storageKey, documentStorageService, logger)
+        val documentWithUrl = addDownloadUrl(
+            effectiveDocument,
+            preferredSource?.storageKey,
+            documentStorageService,
+            logger
+        )
         val draft = documentRepository.getDraftByDocumentId(documentId, tenantId)
         val resolvedContact = resolveContact(draft, tenantId)
         val contactSuggestions = buildContactSuggestions(draft)

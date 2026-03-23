@@ -3,6 +3,7 @@ package tech.dokus.features.cashflow.presentation.detail
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
@@ -77,9 +78,9 @@ class DocumentDetailStateDirectionTest {
         val draftData = InvoiceDraftData(
             direction = direction,
             issueDate = LocalDate(2026, 2, 10),
-            subtotalAmount = Money.from("100.00"),
-            vatAmount = Money.from("21.00"),
-            totalAmount = Money.from("121.00"),
+            subtotalAmount = Money.from("100.00", Currency.Eur),
+            vatAmount = Money.from("21.00", Currency.Eur),
+            totalAmount = Money.from("121.00", Currency.Eur),
             seller = PartyDraftDto(name = sellerName)
         )
 

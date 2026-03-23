@@ -76,7 +76,7 @@ internal fun ReviewTopBar(
                     }
                     if (showAmountLine) {
                         UnderstandingLine(
-                            totalAmount = state.totalAmount?.toDisplayString(),
+                            totalAmount = state.totalAmount?.formatAmount(),
                             isBlocking = state.isBlocking,
                             hasAttention = state.hasAttention,
                             isProcessing = state.isProcessing

@@ -47,9 +47,9 @@ internal fun CanonicalInvoiceDocumentCard(
     val invoiceNumber = data.invoiceNumber ?: "\u2014"
     val issueDate = data.issueDate ?: "\u2014"
     val dueDate = data.dueDate ?: "\u2014"
-    val subtotal = data.subtotalAmount?.toDisplayString()
-    val vat = data.vatAmount?.toDisplayString()
-    val total = data.totalAmount?.toDisplayString() ?: "\u2014"
+    val subtotal = data.subtotalAmount?.formatAmount()
+    val vat = data.vatAmount?.formatAmount()
+    val total = data.totalAmount?.formatAmount() ?: "\u2014"
 
     DokusCardSurface(
         modifier = modifier,

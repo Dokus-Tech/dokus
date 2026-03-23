@@ -21,6 +21,7 @@ import tech.dokus.database.repository.cashflow.InvoiceRepository
 import tech.dokus.database.repository.contacts.ContactRepository
 import tech.dokus.database.repository.drafts.DraftRepository
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.BankTransactionSource
 import tech.dokus.domain.enums.BankTransactionStatus
 import tech.dokus.domain.enums.DocumentDirection
@@ -105,8 +106,8 @@ class DocumentRecordLoaderTest {
             accountIban = Iban("BE68539007547034"),
             periodStart = LocalDate(2026, 3, 1),
             periodEnd = LocalDate(2026, 3, 31),
-            openingBalance = Money.from("1000.00"),
-            closingBalance = Money.from("1200.00"),
+            openingBalance = Money.from("1000.00", Currency.Eur),
+            closingBalance = Money.from("1200.00", Currency.Eur),
             transactionCount = 1,
             createdAt = now,
         )
@@ -116,7 +117,7 @@ class DocumentRecordLoaderTest {
             documentId = documentId,
             source = BankTransactionSource.PdfStatement,
             transactionDate = LocalDate(2026, 3, 15),
-            signedAmount = Money.from("200.00")!!,
+            signedAmount = Money.from("200.00", Currency.Eur)!!,
             counterpartyName = "ACME NV",
             descriptionRaw = "SEPA transfer",
             status = BankTransactionStatus.Unmatched,

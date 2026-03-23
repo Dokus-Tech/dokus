@@ -60,6 +60,7 @@ import tech.dokus.aura.resources.search_suggestions_label
 import tech.dokus.aura.resources.search_total
 import tech.dokus.aura.resources.search_transactions_count
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.DocumentStatus
@@ -434,14 +435,14 @@ private fun SearchResultsSections(
                         titleRes = Res.string.search_section_transactions,
                         count = response.counts.transactions,
                         countLabelRes = Res.string.search_transactions_count,
-                        trailing = "${stringResource(Res.string.search_total)} €${state.aggregates.transactionTotal.toDisplayString()}",
+                        trailing = "${stringResource(Res.string.search_total)} €${state.aggregates.transactionTotal.formatAmount()}",
                     )
                 }
                 items(response.transactions, key = { it.entryId.toString() }) { hit ->
                     SearchResultRow(
                         title = hit.displayText,
                         subtitle = listOf(hit.status.name, hit.date.toString()).joinToString(" · "),
-                        trailing = "€${hit.amount.toDisplayString()}",
+                        trailing = "€${hit.amount.formatAmount()}",
                         trailingColor = when {
                             hit.amount.minor < 0L -> MaterialTheme.colorScheme.error
                             hit.amount.minor > 0L -> MaterialTheme.colorScheme.primary
@@ -636,7 +637,7 @@ private fun previewResponse(query: String, scope: UnifiedSearchScope): UnifiedSe
             displayText = "KBC Bank NV",
             status = CashflowEntryStatus.Paid,
             date = LocalDate(2026, 2, 15),
-            amount = Money.fromDouble(-289.00),
+            amount = Money.fromDouble(-289.00, Currency.Eur),
             direction = CashflowDirection.Out,
             contactName = "KBC Bank NV",
             documentFilename = "KBC Bank - February.pdf",
@@ -646,7 +647,7 @@ private fun previewResponse(query: String, scope: UnifiedSearchScope): UnifiedSe
             displayText = "KBC Bank NV",
             status = CashflowEntryStatus.Open,
             date = LocalDate(2026, 2, 18),
-            amount = Money.fromDouble(1585.52),
+            amount = Money.fromDouble(1585.52, Currency.Eur),
             direction = CashflowDirection.In,
             contactName = "KBC Bank NV",
             documentFilename = null,
@@ -676,9 +677,9 @@ private fun previewResponse(query: String, scope: UnifiedSearchScope): UnifiedSe
             SearchSuggestionDto(label = "documents", countHint = 0),
         ),
         aggregates = SearchAggregatesDto(
-            transactionTotal = Money.fromDouble(1296.52),
-            incomingTotal = Money.fromDouble(1585.52),
-            outgoingTotal = Money.fromDouble(289.00),
+            transactionTotal = Money.fromDouble(1296.52, Currency.Eur),
+            incomingTotal = Money.fromDouble(1585.52, Currency.Eur),
+            outgoingTotal = Money.fromDouble(289.00, Currency.Eur),
         )
     )
 }

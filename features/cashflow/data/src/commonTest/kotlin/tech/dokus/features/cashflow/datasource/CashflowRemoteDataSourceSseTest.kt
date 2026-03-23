@@ -5,6 +5,7 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.plugins.resources.Resources
 import io.ktor.sse.ServerSentEvent
+import kotlinx.datetime.LocalDate
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.take
@@ -130,11 +131,11 @@ private fun documentRecord(documentId: String): DocumentDetailDto {
             tenantId = TenantId.parse("00000000-0000-0000-0000-000000000001"),
             filename = "doc-$documentId.pdf",
             uploadedAt = LocalDateTime(2026, 1, 1, 10, 0),
+            sortDate = LocalDate(2026, 1, 1),
             downloadUrl = null,
         ),
         draft = null,
         latestIngestion = null,
-        confirmedEntity = null,
         cashflowEntryId = null,
         pendingMatchReview = null,
         sources = emptyList(),

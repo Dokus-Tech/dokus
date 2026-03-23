@@ -11,6 +11,7 @@ import tech.dokus.database.tables.contacts.ContactsTable
 import tech.dokus.database.tables.documents.DocumentsTable
 import tech.dokus.domain.Money
 import tech.dokus.domain.enums.CashflowDirection
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.CashflowEntryId
 import tech.dokus.domain.ids.ContactId
@@ -50,7 +51,8 @@ internal fun SearchContactHitEntity.Companion.from(row: ResultRow): SearchContac
 
 internal fun SearchTransactionHitEntity.Companion.from(row: ResultRow): SearchTransactionHitEntity {
     val direction = row[CashflowEntriesTable.direction]
-    val absoluteAmount = Money.fromDbDecimal(row[CashflowEntriesTable.amountGross])
+    val currency = row[CashflowEntriesTable.currency]
+    val absoluteAmount = Money.fromDbDecimal(row[CashflowEntriesTable.amountGross], currency)
     val signedAmount = if (direction == CashflowDirection.Out) -absoluteAmount else absoluteAmount
     val contactName = row.getOrNull(ContactsTable.name)
     val filename = row.getOrNull(DocumentsTable.purposeRendered)

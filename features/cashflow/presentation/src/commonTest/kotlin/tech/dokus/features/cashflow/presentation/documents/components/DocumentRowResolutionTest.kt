@@ -3,6 +3,7 @@ package tech.dokus.features.cashflow.presentation.documents.components
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
@@ -173,7 +174,7 @@ class DocumentRowResolutionTest {
             direction = DocumentDirection.Inbound,
             invoiceNumber = invoiceNumber,
             issueDate = LocalDate(2026, 2, 10),
-            subtotalAmount = Money.from("100.00")
+            subtotalAmount = Money.from("100.00", Currency.Eur)
         )
 
         val draft = DocumentDraftDto(

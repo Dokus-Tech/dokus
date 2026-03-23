@@ -98,9 +98,9 @@ class CashFlowOverviewContainerRefreshTest {
             assertFalse(updated.entries.isLoading())
             assertEquals(CashflowViewMode.Overdue, updated.filters.viewMode)
             assertEquals(overdueEntries.map { it.id }, updated.entries.lastData?.data?.map { it.id })
-            assertEquals(Money(-2500L), updated.summary.netAmount)
-            assertEquals(Money(0L), updated.summary.totalIn)
-            assertEquals(Money(2500L), updated.summary.totalOut)
+            assertEquals(Money(-2500L, Currency.Eur), updated.summary.netAmount)
+            assertEquals(Money(0L, Currency.Eur), updated.summary.totalIn)
+            assertEquals(Money(2500L, Currency.Eur), updated.summary.totalOut)
         }
     }
 
@@ -289,20 +289,20 @@ private fun cashflowOverview(net: Long, cashIn: Long, cashOut: Long): CashflowOv
             to = LocalDate(2026, 1, 31)
         ),
         cashIn = CashInSummary(
-            total = Money(cashIn),
-            paid = Money.ZERO,
-            pending = Money.ZERO,
-            overdue = Money.ZERO,
+            total = Money(cashIn, Currency.Eur),
+            paid = Money.zero(Currency.Eur),
+            pending = Money.zero(Currency.Eur),
+            overdue = Money.zero(Currency.Eur),
             invoiceCount = 0
         ),
         cashOut = CashOutSummary(
-            total = Money(cashOut),
-            paid = Money.ZERO,
-            pending = Money.ZERO,
+            total = Money(cashOut, Currency.Eur),
+            paid = Money.zero(Currency.Eur),
+            pending = Money.zero(Currency.Eur),
             expenseCount = 0,
             inboundInvoiceCount = 0
         ),
-        netCashflow = Money(net),
+        netCashflow = Money(net, Currency.Eur),
         currency = Currency.Eur
     )
 }
@@ -312,7 +312,7 @@ private fun cashflowEntry(
     direction: CashflowDirection,
     amountMinor: Long,
 ): CashflowEntryDto {
-    val amount = Money(amountMinor)
+    val amount = Money(amountMinor, Currency.Eur)
     return CashflowEntryDto(
         id = CashflowEntryId.parse(id),
         tenantId = TenantId.parse("00000000-0000-0000-0000-000000000001"),
@@ -322,8 +322,8 @@ private fun cashflowEntry(
         direction = direction,
         eventDate = LocalDate(2026, 1, 10),
         amountGross = amount,
-        amountVat = Money.ZERO,
-        remainingAmount = Money(kotlin.math.abs(amountMinor)),
+        amountVat = Money.zero(Currency.Eur),
+        remainingAmount = Money(kotlin.math.abs(amountMinor), Currency.Eur),
         currency = Currency.Eur,
         status = CashflowEntryStatus.Open,
         paidAt = null,

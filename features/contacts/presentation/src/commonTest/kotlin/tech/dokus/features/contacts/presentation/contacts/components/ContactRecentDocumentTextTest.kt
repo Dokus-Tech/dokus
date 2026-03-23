@@ -67,8 +67,8 @@ private fun recentInvoice(
         updatedAt = LocalDateTime(2026, 2, 1, 10, 0),
         direction = DocumentDirection.Inbound,
         status = InvoiceStatus.Draft,
-        totalAmount = Money(12100),
-        outstandingAmount = Money(12100),
+        totalAmount = Money.eur(12100),
+        outstandingAmount = Money.eur(12100),
         summary = summary,
         reference = reference
     )

@@ -303,10 +303,10 @@ private fun buildChartSeries(response: BalanceHistoryResponse): List<LineChartSe
 // =============================================================================
 
 private val PreviewSummary = BankAccountSummaryDto(
-    totalBalance = Money(1778042),
+    totalBalance = Money.eur(1778042),
     accountCount = 2,
     unmatchedCount = 3,
-    totalUnresolvedAmount = Money(842050),
+    totalUnresolvedAmount = Money.eur(842050),
     matchedThisPeriod = 12,
     lastSyncedAt = null,
 )
@@ -317,20 +317,20 @@ private val PreviewBalanceHistory = BalanceHistoryResponse(
             accountId = BankAccountId.generate(),
             accountName = "KBC Business",
             points = listOf(
-                BalanceHistoryPointDto(LocalDate(2026, 2, 7), Money(1200000)),
-                BalanceHistoryPointDto(LocalDate(2026, 2, 15), Money(1180000)),
-                BalanceHistoryPointDto(LocalDate(2026, 2, 23), Money(1320000)),
-                BalanceHistoryPointDto(LocalDate(2026, 3, 3), Money(1350000)),
-                BalanceHistoryPointDto(LocalDate(2026, 3, 7), Money(1438042)),
+                BalanceHistoryPointDto(LocalDate(2026, 2, 7), Money.eur(1200000)),
+                BalanceHistoryPointDto(LocalDate(2026, 2, 15), Money.eur(1180000)),
+                BalanceHistoryPointDto(LocalDate(2026, 2, 23), Money.eur(1320000)),
+                BalanceHistoryPointDto(LocalDate(2026, 3, 3), Money.eur(1350000)),
+                BalanceHistoryPointDto(LocalDate(2026, 3, 7), Money.eur(1438042)),
             ),
         ),
     ),
     totalSeries = listOf(
-        BalanceHistoryPointDto(LocalDate(2026, 2, 7), Money(1540000)),
-        BalanceHistoryPointDto(LocalDate(2026, 2, 15), Money(1520000)),
-        BalanceHistoryPointDto(LocalDate(2026, 2, 23), Money(1660000)),
-        BalanceHistoryPointDto(LocalDate(2026, 3, 3), Money(1690000)),
-        BalanceHistoryPointDto(LocalDate(2026, 3, 7), Money(1778042)),
+        BalanceHistoryPointDto(LocalDate(2026, 2, 7), Money.eur(1540000)),
+        BalanceHistoryPointDto(LocalDate(2026, 2, 15), Money.eur(1520000)),
+        BalanceHistoryPointDto(LocalDate(2026, 2, 23), Money.eur(1660000)),
+        BalanceHistoryPointDto(LocalDate(2026, 3, 3), Money.eur(1690000)),
+        BalanceHistoryPointDto(LocalDate(2026, 3, 7), Money.eur(1778042)),
     ),
 )
 

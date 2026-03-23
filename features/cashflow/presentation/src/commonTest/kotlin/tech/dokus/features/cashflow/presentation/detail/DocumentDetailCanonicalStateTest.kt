@@ -3,6 +3,7 @@ package tech.dokus.features.cashflow.presentation.detail
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.CashflowDirection
 import tech.dokus.domain.enums.CashflowEntryStatus
 import tech.dokus.domain.enums.CashflowSourceType
@@ -11,7 +12,6 @@ import tech.dokus.domain.enums.ReviewReason
 import tech.dokus.domain.enums.DocumentMatchReviewStatus
 import tech.dokus.domain.enums.SourceMatchKind
 import tech.dokus.domain.enums.DocumentSource
-import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentSourceStatus
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.IngestionStatus
@@ -284,24 +284,24 @@ class DocumentDetailCanonicalStateTest {
         direction = DocumentDirection.Inbound,
         issueDate = issueDate,
         dueDate = dueDate,
-        subtotalAmount = Money.from("100.00"),
-        vatAmount = Money.from("21.00"),
-        totalAmount = Money.from("121.00"),
+        subtotalAmount = Money.from("100.00", Currency.Eur),
+        vatAmount = Money.from("21.00", Currency.Eur),
+        totalAmount = Money.from("121.00", Currency.Eur),
     )
 
     private fun creditNoteDraft() = CreditNoteDraftData(
         direction = DocumentDirection.Inbound,
         issueDate = LocalDate(2026, 2, 10),
-        subtotalAmount = Money.from("50.00"),
-        vatAmount = Money.from("10.50"),
-        totalAmount = Money.from("60.50"),
+        subtotalAmount = Money.from("50.00", Currency.Eur),
+        vatAmount = Money.from("10.50", Currency.Eur),
+        totalAmount = Money.from("60.50", Currency.Eur),
     )
 
     private fun receiptDraft() = ReceiptDraftData(
         direction = DocumentDirection.Inbound,
         date = LocalDate(2026, 2, 10),
-        totalAmount = Money.from("21.00"),
-        vatAmount = Money.from("3.64"),
+        totalAmount = Money.from("21.00", Currency.Eur),
+        vatAmount = Money.from("3.64", Currency.Eur),
     )
 
     private fun cashflowEntry(status: CashflowEntryStatus) = CashflowEntryDto(
@@ -312,9 +312,9 @@ class DocumentDetailCanonicalStateTest {
         documentId = DocumentId.generate(),
         direction = CashflowDirection.In,
         eventDate = LocalDate(2026, 2, 11),
-        amountGross = Money.from("121.00")!!,
-        amountVat = Money.from("21.00")!!,
-        remainingAmount = if (status == CashflowEntryStatus.Paid) Money.ZERO else Money.from("121.00")!!,
+        amountGross = Money.from("121.00", Currency.Eur)!!,
+        amountVat = Money.from("21.00", Currency.Eur)!!,
+        remainingAmount = if (status == CashflowEntryStatus.Paid) Money.zero(Currency.Eur) else Money.from("121.00", Currency.Eur)!!,
         currency = Currency.Eur,
         status = status,
         paidAt = if (status == CashflowEntryStatus.Paid) LocalDateTime(2026, 2, 15, 0, 0, 0) else null,

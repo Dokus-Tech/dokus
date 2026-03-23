@@ -12,16 +12,18 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.toKotlinUuid
 
 @OptIn(ExperimentalUuidApi::class)
-fun BankAccountEntity.Companion.from(row: ResultRow): BankAccountEntity = BankAccountEntity(
+fun BankAccountEntity.Companion.from(row: ResultRow): BankAccountEntity {
+    val currency = row[BankAccountsTable.currency]
+    return BankAccountEntity(
     id = BankAccountId(row[BankAccountsTable.id].value.toKotlinUuid()),
     tenantId = TenantId(row[BankAccountsTable.tenantId].toKotlinUuid()),
     iban = row[BankAccountsTable.iban]?.let { Iban(it) },
     name = row[BankAccountsTable.name],
     institutionName = row[BankAccountsTable.institutionName],
     accountType = row[BankAccountsTable.accountType],
-    currency = row[BankAccountsTable.currency],
+    currency = currency,
     provider = row[BankAccountsTable.provider],
-    balance = row[BankAccountsTable.balance]?.let { Money.fromDbDecimal(it) },
+    balance = row[BankAccountsTable.balance]?.let { Money.fromDbDecimal(it, currency) },
     balanceUpdatedAt = row[BankAccountsTable.balanceUpdatedAt],
     status = row[BankAccountsTable.status],
     isActive = row[BankAccountsTable.isActive],
@@ -30,3 +32,4 @@ fun BankAccountEntity.Companion.from(row: ResultRow): BankAccountEntity = BankAc
         ?.let { BankAccountId(it) },
     providerAccountId = row[BankAccountsTable.providerAccountId],
 )
+}

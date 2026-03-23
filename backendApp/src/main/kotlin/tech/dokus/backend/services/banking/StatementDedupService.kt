@@ -1,12 +1,12 @@
 package tech.dokus.backend.services.banking
 
+import kotlinx.datetime.LocalDate
 import tech.dokus.database.repository.banking.BankStatementRepository
 import tech.dokus.domain.Money
 import tech.dokus.domain.ids.Iban
 import tech.dokus.domain.ids.TenantId
 import tech.dokus.foundation.backend.utils.loggerFor
 import tech.dokus.foundation.backend.utils.runSuspendCatching
-import kotlinx.datetime.LocalDate
 
 /**
  * Prevents duplicate statement imports.
@@ -55,7 +55,8 @@ class StatementDedupService(
                 if (balanceMatch) {
                     logger.info(
                         "Statement dedup: weak match (IBAN+period+balance) for tenant {} (iban={})",
-                        tenantId, accountIban
+                        tenantId,
+                        accountIban
                     )
                     return@runSuspendCatching StatementDedupOutcome.NeedsReview
                 }

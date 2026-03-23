@@ -240,13 +240,13 @@ private fun DocumentIdentityCard(
         else -> ""
     }
     val totalAmount = when (uiData) {
-        is DocumentUiData.Invoice -> uiData.totalAmount?.let { "${uiData.currencySign}${it.toDisplayString()}" }
+        is DocumentUiData.Invoice -> uiData.totalAmount?.let { "${uiData.currencySign}${it.formatAmount()}" }
             ?: ""
 
-        is DocumentUiData.CreditNote -> uiData.totalAmount?.let { "${uiData.currencySign}${it.toDisplayString()}" }
+        is DocumentUiData.CreditNote -> uiData.totalAmount?.let { "${uiData.currencySign}${it.formatAmount()}" }
             ?: ""
 
-        is DocumentUiData.Receipt -> uiData.totalAmount?.let { "${uiData.currencySign}${it.toDisplayString()}" }
+        is DocumentUiData.Receipt -> uiData.totalAmount?.let { "${uiData.currencySign}${it.formatAmount()}" }
             ?: ""
 
         else -> ""

@@ -99,6 +99,7 @@ private class PurchaseOrderExtractionFinishTool :
         description = "Submit extracted purchase order fields from the document. Only include values you can see.",
     ) {
     override suspend fun execute(args: PurchaseOrderExtractionToolInput): FinancialExtractionResult.PurchaseOrder {
+        val currency = Currency.from(args.currency)
         return FinancialExtractionResult.PurchaseOrder(
             PurchaseOrderExtractionResult(
                 poNumber = args.poNumber,
@@ -107,10 +108,10 @@ private class PurchaseOrderExtractionFinishTool :
                 supplierName = args.supplierName,
                 supplierVat = VatNumber.from(args.supplierVat),
                 supplierEmail = Email.from(args.supplierEmail),
-                currency = Currency.from(args.currency),
-                subtotalAmount = Money.from(args.subtotalAmount),
-                vatAmount = Money.from(args.vatAmount),
-                totalAmount = Money.from(args.totalAmount),
+                currency = currency,
+                subtotalAmount = Money.from(args.subtotalAmount, currency),
+                vatAmount = Money.from(args.vatAmount, currency),
+                totalAmount = Money.from(args.totalAmount, currency),
                 iban = Iban.from(args.iban),
                 payment = CanonicalPaymentDto.from(args.paymentReference),
                 confidence = args.confidence,

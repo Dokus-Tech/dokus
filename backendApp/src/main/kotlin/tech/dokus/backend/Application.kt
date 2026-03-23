@@ -1,8 +1,6 @@
 package tech.dokus.backend
 
 import io.ktor.server.application.Application
-import kotlinx.coroutines.runBlocking
-import org.koin.ktor.ext.get
 import io.ktor.server.application.install
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty

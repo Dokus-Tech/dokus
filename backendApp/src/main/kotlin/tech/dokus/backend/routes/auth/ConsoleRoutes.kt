@@ -10,10 +10,8 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.ktor.ext.inject
 import org.slf4j.LoggerFactory
-import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
 import tech.dokus.backend.mappers.from
-import tech.dokus.domain.model.DocumentDraftDto
-import tech.dokus.domain.model.DocumentIngestionDto
+import tech.dokus.backend.routes.cashflow.documents.addDownloadUrl
 import tech.dokus.backend.security.requireAnyRole
 import tech.dokus.backend.security.requireFirmAccess
 import tech.dokus.backend.security.requireFirmClientAccess
@@ -24,6 +22,8 @@ import tech.dokus.domain.enums.UserRole
 import tech.dokus.domain.exceptions.DokusException
 import tech.dokus.domain.ids.DocumentId
 import tech.dokus.domain.model.DocumentDetailDto
+import tech.dokus.domain.model.DocumentDraftDto
+import tech.dokus.domain.model.DocumentIngestionDto
 import tech.dokus.domain.model.auth.AcceptFirmInviteRequest
 import tech.dokus.domain.model.auth.AcceptFirmInviteResponse
 import tech.dokus.domain.model.auth.ResolveFirmInviteResponse
@@ -85,7 +85,7 @@ internal fun Route.consoleRoutes() {
                     document = documentWithUrl,
                     draft = docInfo.draft?.let { DocumentDraftDto.from(it) },
                     latestIngestion = docInfo.latestIngestion?.let { DocumentIngestionDto.from(it) },
-                                    )
+                )
             }
 
             call.respond(
@@ -129,7 +129,7 @@ internal fun Route.consoleRoutes() {
                             includeTrace = true
                         )
                     },
-                                    )
+                )
             )
         }
 

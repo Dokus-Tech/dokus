@@ -135,7 +135,7 @@ fun DocDto.toTableRow(): FinancialDocumentRow {
     val formattedAmount = stringResource(
         Res.string.cashflow_amount_with_currency,
         docCurrency.displaySign,
-        formattedNumber ?: docAmount?.toDisplayString().orEmpty()
+        formattedNumber ?: docAmount?.formatAmount().orEmpty()
     )
 
     val docId = when (this) {

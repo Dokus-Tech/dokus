@@ -162,7 +162,7 @@ internal fun MobileAmountHeroCard(
         is DocumentUiData.CreditNote -> uiData.primaryDescription
         is DocumentUiData.Receipt -> uiData.primaryDescription
     }
-    val amount = state.totalAmount?.toDisplayString() ?: "\u2014"
+    val amount = state.totalAmount?.formatAmount() ?: "\u2014"
 
     DokusCardSurface(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth()) {

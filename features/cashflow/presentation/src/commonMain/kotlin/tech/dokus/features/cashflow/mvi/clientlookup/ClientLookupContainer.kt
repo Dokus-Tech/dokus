@@ -414,7 +414,7 @@ internal class ClientLookupContainer(
                 InvoiceLineItem(
                     description = item.description,
                     quantity = item.quantity?.value ?: 1.0,
-                    unitPrice = item.unitPrice?.toDisplayString().orEmpty(),
+                    unitPrice = item.unitPrice?.formatAmount().orEmpty(),
                     vatRatePercent = item.vatRate?.basisPoints?.div(100) ?: 21
                 )
             }

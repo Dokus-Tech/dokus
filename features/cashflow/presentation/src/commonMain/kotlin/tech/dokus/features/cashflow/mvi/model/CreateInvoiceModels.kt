@@ -7,6 +7,7 @@ import kotlinx.datetime.plus
 import kotlinx.datetime.todayIn
 import tech.dokus.domain.Money
 import tech.dokus.domain.VatRate
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.InvoiceDeliveryMethod
 import tech.dokus.domain.enums.InvoiceDueDateMode
 import tech.dokus.domain.exceptions.DokusException
@@ -112,10 +113,10 @@ data class CreateInvoiceFormState(
     val errors: Map<String, DokusException> = emptyMap()
 ) {
     val subtotalMoney: Money
-        get() = items.fold(Money.ZERO) { acc, item -> acc + item.lineTotalMoney }
+        get() = items.fold(Money.zero(Currency.Eur)) { acc, item -> acc + item.lineTotalMoney }
 
     val vatAmountMoney: Money
-        get() = items.fold(Money.ZERO) { acc, item -> acc + item.vatAmountMoney }
+        get() = items.fold(Money.zero(Currency.Eur)) { acc, item -> acc + item.vatAmountMoney }
 
     val totalMoney: Money
         get() = subtotalMoney + vatAmountMoney
@@ -156,10 +157,10 @@ data class InvoiceLineItem(
     val vatRatePercent: Int = DefaultVatRatePercent
 ) {
     val unitPriceMoney: Money
-        get() = Money.parse(unitPrice) ?: Money.ZERO
+        get() = Money.parse(unitPrice, Currency.Eur) ?: Money.zero(Currency.Eur)
 
     val lineTotalMoney: Money
-        get() = Money(round(unitPriceMoney.minor.toDouble() * quantity).toLong())
+        get() = Money(round(unitPriceMoney.minor.toDouble() * quantity).toLong(), Currency.Eur)
 
     val vatRate: VatRate
         get() = VatRate(vatRatePercent * VatRateMultiplier)
@@ -178,4 +179,4 @@ data class InvoiceLineItem(
 }
 
 fun formatMoney(amount: Money, currencySign: String = "€"): String =
-    "$currencySign${amount.toDisplayString()}"
+    "$currencySign${amount.formatAmount()}"

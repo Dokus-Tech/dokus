@@ -3,6 +3,7 @@ package tech.dokus.features.cashflow.presentation.documents.components
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentStatus
 import tech.dokus.domain.enums.DocumentType
 import tech.dokus.domain.enums.ExpenseCategory
@@ -164,7 +165,7 @@ class DocumentRowAttentionTest {
             tenantId = TENANT_ID,
             date = LocalDate(2024, 1, 1),
             merchantName = "Vendor",
-            totalAmount = Money.fromInt(100),
+            totalAmount = Money.fromInt(100, Currency.Eur),
             category = ExpenseCategory.Other,
             documentId = documentId,
             createdAt = NOW,

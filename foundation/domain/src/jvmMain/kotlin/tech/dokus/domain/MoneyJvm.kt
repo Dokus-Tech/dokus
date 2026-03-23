@@ -25,8 +25,8 @@ fun Money.toDbDecimal(): BigDecimal = BigDecimal.valueOf(minor, CurrencyDecimalS
  * Create Money from a database decimal value.
  * DB stores as DECIMAL(12,2) like 123.45, we store as 12345 (minor units).
  */
-fun Money.Companion.fromDbDecimal(dbValue: BigDecimal): Money =
-    Money(dbValue.movePointRight(CurrencyDecimalScale).longValueExact())
+fun Money.Companion.fromDbDecimal(dbValue: BigDecimal, currency: tech.dokus.domain.enums.Currency): Money =
+    Money(dbValue.movePointRight(CurrencyDecimalScale).longValueExact(), currency)
 
 // ============================================================================
 // VatRate extensions

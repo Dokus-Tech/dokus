@@ -227,7 +227,7 @@ private fun DocumentDetailModePreview(
         DocQueueItem(
             id = docId1,
             vendorName = DisplayName("Acme Corp"),
-            amount = Money.from("1250.00")!!,
+            amount = Money.from("1250.00", Currency.Eur)!!,
             currency = Currency.Eur,
             date = LocalDate(2026, 2, 15),
             status = DocQueueStatus.Review,
@@ -235,7 +235,7 @@ private fun DocumentDetailModePreview(
         DocQueueItem(
             id = docId2,
             vendorName = DisplayName("Tech Solutions"),
-            amount = Money.from("890.50")!!,
+            amount = Money.from("890.50", Currency.Eur)!!,
             currency = Currency.Eur,
             date = LocalDate(2026, 2, 14),
             status = DocQueueStatus.Paid,

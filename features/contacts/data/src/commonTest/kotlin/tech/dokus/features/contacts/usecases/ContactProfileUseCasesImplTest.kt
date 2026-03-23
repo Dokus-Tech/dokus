@@ -4,6 +4,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.enums.DocumentDirection
 import tech.dokus.domain.enums.DocumentSource
 import tech.dokus.domain.enums.DocumentStatus
@@ -165,7 +166,7 @@ class ContactProfileUseCasesImplTest {
             documentStatus: DocumentStatus?,
             ingestionStatus: IngestionStatus?,
             sortBy: String?,
-            contactId: String?,
+            contactId: ContactId?,
         ): Result<PaginatedResponse<DocumentListItemDto>> {
             return Result.success(
                 PaginatedResponse(
@@ -212,7 +213,7 @@ private fun listItem(
         uploadedAt = now,
         counterpartyDisplayName = counterpartyDisplayName,
         purposeRendered = null,
-        totalAmount = Money(12100),
+        totalAmount = Money.eur(12100),
         currency = null,
         sortDate = sortDate,
     )
@@ -232,10 +233,10 @@ private fun confirmedInvoice(
         invoiceNumber = invoiceNumber,
         issueDate = LocalDate(2026, 2, 1),
         dueDate = LocalDate(2026, 2, 1),
-        subtotalAmount = Money(10000),
-        vatAmount = Money(2100),
-        totalAmount = Money(12100),
-        paidAmount = Money.ZERO,
+        subtotalAmount = Money.eur(10000),
+        vatAmount = Money.eur(2100),
+        totalAmount = Money.eur(12100),
+        paidAmount = Money.zero(Currency.Eur),
         status = InvoiceStatus.Draft,
         notes = notes,
         lineItems = itemDescription?.let {
@@ -243,10 +244,10 @@ private fun confirmedInvoice(
                 DocLineItem(
                     description = it,
                     quantity = tech.dokus.domain.Quantity(1.0),
-                    unitPrice = Money(10000),
+                    unitPrice = Money.eur(10000),
                     vatRate = tech.dokus.domain.VatRate.STANDARD_BE,
-                    netAmount = Money(10000),
-                    vatAmount = Money(2100)
+                    netAmount = Money.eur(10000),
+                    vatAmount = Money.eur(2100)
                 )
             )
         } ?: emptyList(),

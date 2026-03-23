@@ -197,7 +197,7 @@ class CreditNoteService(
             documentId = creditNote.documentId,
             refundDate = request.refundDate,
             amountGross = request.amount,
-            amountVat = Money.ZERO, // VAT already accounted for in credit note
+            amountVat = Money.zero(creditNote.currency), // VAT already accounted for in credit note
             direction = direction,
             contactId = creditNote.contactId
         ).getOrThrow()

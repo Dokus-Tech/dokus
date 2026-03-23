@@ -17,6 +17,7 @@ internal fun CashflowEntryEntity.Companion.from(
     row: ResultRow,
     contactName: String? = null
 ): CashflowEntryEntity {
+    val currency = row[CashflowEntriesTable.currency]
     return CashflowEntryEntity(
         id = CashflowEntryId.parse(row[CashflowEntriesTable.id].value.toString()),
         tenantId = TenantId.parse(row[CashflowEntriesTable.tenantId].toString()),
@@ -25,10 +26,10 @@ internal fun CashflowEntryEntity.Companion.from(
         documentId = row[CashflowEntriesTable.documentId]?.let { DocumentId.parse(it.toString()) },
         direction = row[CashflowEntriesTable.direction],
         eventDate = row[CashflowEntriesTable.eventDate],
-        amountGross = Money.fromDbDecimal(row[CashflowEntriesTable.amountGross]),
-        amountVat = Money.fromDbDecimal(row[CashflowEntriesTable.amountVat]),
-        remainingAmount = Money.fromDbDecimal(row[CashflowEntriesTable.remainingAmount]),
-        currency = row[CashflowEntriesTable.currency],
+        amountGross = Money.fromDbDecimal(row[CashflowEntriesTable.amountGross], currency),
+        amountVat = Money.fromDbDecimal(row[CashflowEntriesTable.amountVat], currency),
+        remainingAmount = Money.fromDbDecimal(row[CashflowEntriesTable.remainingAmount], currency),
+        currency = currency,
         status = row[CashflowEntriesTable.status],
         paidAt = row[CashflowEntriesTable.paidAt],
         contact = row[CashflowEntriesTable.counterpartyId]?.let { counterpartyId ->

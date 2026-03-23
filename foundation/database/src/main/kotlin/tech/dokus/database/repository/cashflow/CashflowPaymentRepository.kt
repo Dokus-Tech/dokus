@@ -55,7 +55,7 @@ class CashflowPaymentRepository {
         }.singleOrNull() ?: throw DokusException.NotFound("Cashflow entry not found")
 
         return EntryPaymentSnapshot(
-            remaining = Money.fromDbDecimal(entry[CashflowEntriesTable.remainingAmount]),
+            remaining = Money.fromDbDecimal(entry[CashflowEntriesTable.remainingAmount], entry[CashflowEntriesTable.currency]),
             sourceType = entry[CashflowEntriesTable.sourceType],
             sourceId = entry[CashflowEntriesTable.sourceId],
             currentStatus = entry[CashflowEntriesTable.status],
@@ -99,8 +99,9 @@ class CashflowPaymentRepository {
                 (InvoicesTable.tenantId eq tenantUuid)
         }.singleOrNull() ?: throw DokusException.NotFound("Invoice not found for cashflow entry")
 
-        val invoiceTotal = Money.fromDbDecimal(invoice[InvoicesTable.totalAmount])
-        val currentPaid = Money.fromDbDecimal(invoice[InvoicesTable.paidAmount])
+        val invoiceCurrency = invoice[InvoicesTable.currency]
+        val invoiceTotal = Money.fromDbDecimal(invoice[InvoicesTable.totalAmount], invoiceCurrency)
+        val currentPaid = Money.fromDbDecimal(invoice[InvoicesTable.paidAmount], invoiceCurrency)
         val updatedPaid = currentPaid + paymentAmount
         if (updatedPaid > invoiceTotal) {
             throw DokusException.BadRequest("Accumulated paid amount would exceed invoice total")

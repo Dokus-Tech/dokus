@@ -4,6 +4,7 @@ import org.jetbrains.exposed.v1.core.ResultRow
 import tech.dokus.database.entity.PaymentEntity
 import tech.dokus.database.tables.payment.PaymentsTable
 import tech.dokus.domain.Money
+import tech.dokus.domain.enums.Currency
 import tech.dokus.domain.fromDbDecimal
 import tech.dokus.domain.ids.BankTransactionId
 import tech.dokus.domain.ids.InvoiceId
@@ -16,7 +17,7 @@ fun PaymentEntity.Companion.from(row: ResultRow): PaymentEntity = PaymentEntity(
     id = PaymentId.parse(row[PaymentsTable.id].value.toString()),
     tenantId = TenantId.parse(row[PaymentsTable.tenantId].toString()),
     invoiceId = InvoiceId.parse(row[PaymentsTable.invoiceId].toString()),
-    amount = Money.fromDbDecimal(row[PaymentsTable.amount]),
+    amount = Money.fromDbDecimal(row[PaymentsTable.amount], Currency.Eur),
     paymentDate = row[PaymentsTable.paymentDate],
     paymentMethod = row[PaymentsTable.paymentMethod],
     transactionId = row[PaymentsTable.transactionId]?.let { TransactionId(it) },

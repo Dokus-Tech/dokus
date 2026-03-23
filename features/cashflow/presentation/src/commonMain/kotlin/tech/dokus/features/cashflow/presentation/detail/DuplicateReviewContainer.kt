@@ -193,7 +193,7 @@ private fun computeDiffs(existing: DocDto, incoming: DocDto): List<DuplicateDiff
     val existingTotal = existing.totalAmount
     val incomingTotal = incoming.totalAmount
     if (existingTotal != null && incomingTotal != null && existingTotal != incomingTotal) {
-        add(DuplicateDiff("total", "\u20AC${existingTotal.toDisplayString()}", "\u20AC${incomingTotal.toDisplayString()}"))
+        add(DuplicateDiff("total", "\u20AC${existingTotal.formatAmount()}", "\u20AC${incomingTotal.formatAmount()}"))
     }
 
     val existingDate = existing.sortDate
