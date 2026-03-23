@@ -4,6 +4,26 @@ All notable changes to Dokus are documented in this file.
 
 The format follows Keep a Changelog principles with pragmatic release summaries.
 
+## [1.3.4] - 2026-03-23
+
+### Added
+- Multi-currency support with mandatory currency on `Money` domain model (#251).
+- Comprehensive status resolution for recent documents in contact profiles.
+- Invoice status derived from linked document presence.
+- Dynamic format labels for document source and download button.
+
+### Changed
+- Bank statement transaction table and row UI refined with improved inspector pane, typography, and explicit text colors.
+- Profile settings screen layout and alignment improved.
+- Contact resolution and extraction accuracy enhanced for inbound/outbound documents.
+- Dynamic app versioning displayed in ProfileDangerZoneCard.
+
+### Fixed
+- Document confirmation flow fixes (#251).
+
+### Internal
+- Prototype and snapshot assets cleaned up.
+
 ## [1.3.3] - 2026-03-22
 
 ### Added
